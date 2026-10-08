@@ -10,7 +10,7 @@ See the `BaseProvider` for inherited methods.
 
 Returns the configured table name for this Channel.
 
-The default is `megaphone_notifications`. It can be overridden by setting the `tableName` property.
+The default is `megaphone_notifications`. It can be overridden by setting the `table` property.
 
 <table><thead><tr><th width="140">Name</th><th width="229">Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td>No arguments</td><td></td><td></td><td></td><td></td></tr></tbody></table>
 

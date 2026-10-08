@@ -13,7 +13,7 @@ Though not a common use case, you can retrieve configured Channel instances usin
 		    "provider": "DatabaseProvider@megaphone",
 		    "properties": {
                         // this is the default table name
-                        "tableName": "megaphone_notifications",
+                        "table": "megaphone_notifications",
                         "datasource": "megaphone"
                     }
                 }

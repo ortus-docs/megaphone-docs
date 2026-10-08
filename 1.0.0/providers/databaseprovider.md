@@ -2,6 +2,8 @@
 
 The `DatabaseProvider` stores notifications in a table that you can then query to show in your application.  It also provides a `DatabaseNotificationService` to interact with the notifications for a `Notifiable` including pagination and marking as read.
 
+For archive state, access constraints, read snapshots, history imports, retention, and keyset pages, see [notification inboxes](../guides/notification-inboxes.md).
+
 ### Requirements
 
 To use the `DatabaseProvider`, you need a table to store the notifications in.  A migration is provided in Megaphone that you can copy to your application to use.  If you are not using `cfmigrations`, create a table that has the same structure in your database.  The table name can be customized, if needed.
@@ -78,7 +80,7 @@ The `DatabaseProvider` accepts the following properties:
 
 ```json
 {
-    "tableName": "megaphone_notifications",
+    "table": "megaphone_notifications",
     "datasource": null,
     "queryOptions": {}
 }

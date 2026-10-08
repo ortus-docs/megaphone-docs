@@ -1,5 +1,8 @@
 # DatabaseNotificationService
 
+The 1.1.0 inbox APIs add constrained retrieval, unread counts, snapshots, imports, pruning, and keyset slices. See [notification inboxes](../../../guides/notification-inboxes.md) for configuration and examples.
+
+
 ### getNotifications
 
 Returns all database notifications for a Notifiable.

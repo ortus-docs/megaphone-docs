@@ -1,5 +1,8 @@
 # HasDatabaseNotifications
 
+The inbox methods are also available through this delegate and use the parent object as the recipient. See [notification inboxes](../../../guides/notification-inboxes.md).
+
+
 This is a [delegate component](https://wirebox.ortusbooks.com/usage/wirebox-delegators) and requires ColdBox 7+. It should be added to an [`INotifiable`](../../inotifiable.md) instance.
 
 ### getNotifications

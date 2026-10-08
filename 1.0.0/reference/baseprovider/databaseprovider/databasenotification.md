@@ -1,5 +1,8 @@
 # DatabaseNotification
 
+With inbox state enabled, `archive()` and `unarchive()` preserve the read date. Recipient ownership and visibility constraints still apply when a loaded notification is mutated. See [notification inboxes](../../../guides/notification-inboxes.md).
+
+
 ### markAsRead
 
 Marks the notification as read and updates the database.

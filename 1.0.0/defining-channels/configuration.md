@@ -13,7 +13,7 @@ Like cbmailservices and cbfs, Megaphone creates channels to send `Notification` 
 		    "provider": "DatabaseProvider@megaphone",
 		    "properties": {
                         // this is the default table name
-                        "tableName": "megaphone_notifications",
+                        "table": "megaphone_notifications",
                         "datasource": "megaphone"
                     }
                 },
