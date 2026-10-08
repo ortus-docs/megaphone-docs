@@ -1,0 +1,11 @@
+$schema: https://api.gitbook.com/gitbook-docs.yaml
+site:
+  title: Megaphone
+  structure:
+    - type: space
+      key: space-1
+      title: v1.0.0
+      path: 1.0.0
+      default: true
+      content:
+        directory: ./1.0.0
