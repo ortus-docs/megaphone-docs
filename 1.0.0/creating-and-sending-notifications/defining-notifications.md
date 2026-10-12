@@ -4,7 +4,7 @@
 
 Notifications are CFCs that extend [`megaphone.models.BaseNotification`](../reference/basenotification.md).
 
-```cfscript
+```js
 // StockRebalancingCompleteNotification.cfc
 component extends="megaphone.models.BaseNotification" accessors="true" {
 
@@ -35,7 +35,7 @@ The `via` method defines what channels the `Notification` will be sent by return
 
 You may choose certain channels for a certain `Notifiable` type, like only sending SMS messages to `User` instances, not `Team` instances. &#x20;
 
-```cfscript
+```js
 public array function via( required any notifiable ) {
     return notifiable.getNotifiableType() == "user" ?
         [ "sms", "email" ] :
@@ -45,7 +45,7 @@ public array function via( required any notifiable ) {
 
 You can also store `Notifiable`-specific configuration, like allowing a `User` to opt-in to certain channels like `sms`, `email`, or `slack`.
 
-```cfscript
+```js
 public array function via( required any notifiable ) {
     return notifiable.getNotificationChannels();
 }
@@ -63,7 +63,7 @@ For example, if your `DatabaseProvider` channel was called `db`, your `via` meth
 
 For instance, if you are using a `DatabaseProvider`, you need a `toDatabase` method.
 
-```cfscript
+```js
 public array function via( required any notifiable ) {
     return [ "database" ];
 }

@@ -24,7 +24,7 @@ Converts the `PlainTextOnlyTextObject` instance to a serializable format.
 
 **Return**: (`struct`) A struct representing this `PlainTextOnlyTextObject` instance.
 
-```cfscript
+```js
 {
     "type": "plain_text",
     "text": "Some text here :tada:",

@@ -23,7 +23,7 @@ Deletes the notification from the database.
 
 Returns a serializable representation of this `DatabaseNotification`.
 
-```cfscript
+```js
 {
     "id": getId(),
     "type": getType(),

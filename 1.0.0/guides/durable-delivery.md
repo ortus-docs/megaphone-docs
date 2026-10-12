@@ -2,7 +2,7 @@
 
 Use the same notifiable and notification conventions for immediate and queued delivery:
 
-```cfc
+```js
 megaphone.notify(user, "OrderReadyNotification", { "orderId": orderId });
 var publication = megaphone.queue(
     notifiables = user,
@@ -26,7 +26,7 @@ Notifications extend `BaseNotification`, implement `via(notifiable)` and the usu
 
 ### Module configuration
 
-```cfc
+```js
 moduleSettings.megaphone = {
     "channels": {
         "database": { "provider": "DatabaseProvider@megaphone", "properties": {} },

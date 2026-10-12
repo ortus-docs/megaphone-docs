@@ -24,6 +24,6 @@ Though not a common use case, you can retrieve configured Channel instances usin
 }
 </code></pre>
 
-```cfscript
+```js
 var databaseChannel = wirebox.getInstance( "megaphone:database" );
 ```

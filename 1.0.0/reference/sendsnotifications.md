@@ -2,7 +2,7 @@
 
 This is a [delegate component](https://wirebox.ortusbooks.com/usage/wirebox-delegators) and requires ColdBox 7+. It should be added to an [`INotifiable`](inotifiable.md) instance.
 
-```cfscript
+```js
 component
     name="User"
     delegates="SendsNotifications@megaphone"

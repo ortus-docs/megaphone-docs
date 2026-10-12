@@ -44,7 +44,7 @@ Converts the `ImageBlock` instance to a serializable format.
 
 **Return**: (`struct`) A struct representing this `ImageBlock` instance.
 
-```cfscript
+```js
 {
     "type": "image",
     "image_url": "https://placekitten.com/200/300",

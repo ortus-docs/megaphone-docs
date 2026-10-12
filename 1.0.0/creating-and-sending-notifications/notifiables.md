@@ -6,7 +6,7 @@ A `Notifiable` is a something that can recieve a notification.  Traditionally it
 
 A `Notifiable` needs to implement the `INotifiable` interface (`implements` keyword optional).
 
-```cfscript
+```js
 interface displayName="INotifiable" {
 
     /**
@@ -24,7 +24,7 @@ interface displayName="INotifiable" {
 
 An example implementation for a `User` component could be as follows:
 
-```cfscript
+```js
 component
     name="User"
     accessors="true"

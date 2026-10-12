@@ -20,7 +20,7 @@ Converts the `EventMetadata` instance to a serializable format.
 
 **Return**: (`struct`) A struct representing this `EventMetadata` instance.
 
-```cfscript
+```js
 {
     "event_type": "type",
     "event_payload": { ... } 

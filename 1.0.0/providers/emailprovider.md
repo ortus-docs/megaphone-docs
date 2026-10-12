@@ -22,7 +22,7 @@ The `EmailProvider` accepts the following properties:
 
 The `toEmail` method returns a `Mail@cbmailservices` instance to send. The `to` property can be either defined in the `toEmail` method or a `routeNotificationForEmail` method defined on the `Notifiable` instance.
 
-```cfscript
+```js
 public struct function toEmail( notifiable, newMail ) {
     return newMail(
         to = notifiable.getEmail(),
@@ -40,7 +40,7 @@ public struct function toEmail( notifiable, newMail ) {
 
 You can let the `Notifiable` instance define how to send the Email Notification by adding a `routeNotificationForEmail` method.
 
-```cfscript
+```js
 component accessors="true" {
     
     property name="email";

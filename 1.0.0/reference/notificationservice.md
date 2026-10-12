@@ -32,7 +32,7 @@ Returns a map of channel names to Provider instances.
 
 Use the same notifiable and notification conventions for immediate and queued delivery:
 
-```cfc
+```js
 megaphone.notify(user, "OrderReadyNotification", { "orderId": orderId });
 var publication = megaphone.queue(
     notifiables = user,
