@@ -30,7 +30,21 @@ Sends a notification to this [`INotifiable`](inotifiable.md) instance.
 
 **Return**: `notification` instance, after it has been populated and sent to the `notifiables`.
 
+### queue
 
-## Durable queue
+Queues a Notification for this Notifiable. You can pass a Notification instance or a WireBox name, just as you can with `notify()`:
 
-`queue(notification, properties={}, options={})` delegates to NotificationService with this notifiable and returns NotificationPublication. The released `notify(notification, properties={})` still returns BaseNotification.
+```js
+user.queue(
+    "StockRebalancingCompleteNotification",
+    { "stockSymbol": "APPL", "completionTimestamp": now() }
+);
+```
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `notification` | `string` or `BaseNotification` | true | | The Notification instance or its WireBox mapping. |
+| `properties` | `struct` | false | `{}` | Properties to populate on the Notification. |
+| `options` | `struct` | false | `{}` | The options accepted by `NotificationService.queue()`. |
+
+**Return**: A `NotificationPublication`. See [Durable Delivery](../guides/durable-delivery.md) for setup and [Event Identities](../guides/event-identities.md) for options. `notify()` continues to return the populated `BaseNotification` instance.

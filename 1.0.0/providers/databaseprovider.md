@@ -2,7 +2,7 @@
 
 The `DatabaseProvider` stores notifications in a table that you can then query to show in your application.  It also provides a `DatabaseNotificationService` to interact with the notifications for a `Notifiable` including pagination and marking as read.
 
-For archive state, access constraints, read snapshots, history imports, retention, and keyset pages, see [notification inboxes](../guides/notification-inboxes.md).
+Want to add a "load more" button, archive old entries, or mark only the Notifications a user has seen as read? See [Notification Inboxes](../guides/notification-inboxes.md) for those examples, along with authorization, imports, and retention.
 
 ### Requirements
 

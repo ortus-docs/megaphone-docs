@@ -32,6 +32,62 @@ Returns the WireBox ID of the Notification.
 
 **Return**: (string) The WireBox ID of the Notification.
 
-Notifications extend `BaseNotification`, implement `via(notifiable)` and the usual `to{Provider}` methods, and may override `getChannelPreferences(notifiable)` to return a channel-name map of `{ enabled, source }`. The default enables the channels returned by `via()`. Synchronous delivery skips disabled channels. Durable delivery records them as suppressed; later opt-in does not revive them.
+### getQueueProperties
 
-`getQueueProperties()` defaults to the explicitly populated properties. Notifications configured through setters must override it to return their durable properties. Store JSON data rather than components, closures, credentials, users, or prepared mail/request objects. `getNotificationMapping()` defaults to the WireBox identity; override it when notification type and reconstruction mapping differ. `getDeliveryContext(notifiable, channelName)` provides application routing context, separate from the notification properties.
+Returns the properties to save when this Notification is planned for durable delivery. By default, these are the properties explicitly passed to `populate()`, including those supplied to `plan()` or `queue()`.
+
+If you configure the Notification through setters, override this method to include those values:
+
+```js
+public struct function getQueueProperties() {
+    return {
+        "stockSymbol": getStockSymbol(),
+        "completionTimestamp": getCompletionTimestamp()
+    };
+}
+```
+
+Use JSON-safe data that a worker can use to reconstruct the Notification. Resolve users and build mail or request objects when preparing delivery, instead of saving those objects or credentials in the snapshot.
+
+**Return**: A `struct` of Notification properties.
+
+### getChannelPreferences
+
+Returns the preferences for the channels selected by `via()`. Override it when your application needs to resolve channel choices for this Notifiable.
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `notifiable` | `INotifiable` | true | | The Notifiable receiving the Notification. |
+| `channelNames` | `array` | false | Result of `via(notifiable)` | The channels whose preferences should be returned. |
+
+Each channel has an `enabled` value and a `source` describing where the choice came from:
+
+```js
+return {
+    "database": { "enabled": true, "source": "default" },
+    "email": { "enabled": false, "source": "team:42" }
+};
+```
+
+The default enables every selected channel. `notify()` skips disabled channels; durable planning captures them as suppressed work. See [Notification Preferences](../guides/notification-preferences.md) for resolving application scopes.
+
+**Return**: A `struct` keyed by channel name, with `{ enabled, source }` for each channel.
+
+### getNotificationMapping
+
+Returns the WireBox mapping used to reconstruct this Notification in a worker. It defaults to the WireBox identity, or the component name when no WireBox identity is available.
+
+Override this if your stored notification type differs from the mapping needed to create the Notification.
+
+**Return**: A `string` reconstruction mapping.
+
+### getDeliveryContext
+
+Returns application routing data for a Notifiable and channel, separately from the Notification's queued properties. Override it when the delivery needs context such as a specific push device.
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `notifiable` | `INotifiable` | true | | The Notifiable receiving the Notification. |
+| `channelName` | `string` | true | | The configured channel name. |
+
+**Return**: A JSON-safe `struct`. The default is `{}`.

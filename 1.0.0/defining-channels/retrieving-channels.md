@@ -2,7 +2,7 @@
 
 Though not a common use case, you can retrieve configured Channel instances using the Megaphone Channel WireBox DSL.
 
-<pre class="language-cfscript"><code class="lang-cfscript"><strong>// config/modules/megaphone.cfc
+<pre class="language-js"><code class="lang-js"><strong>// config/modules/megaphone.cfc
 </strong>component {
 
     function configure() {

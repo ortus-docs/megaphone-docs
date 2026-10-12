@@ -1,8 +1,5 @@
 # HasDatabaseNotifications
 
-The inbox methods are also available through this delegate and use the parent object as the recipient. See [notification inboxes](../../../guides/notification-inboxes.md).
-
-
 This is a [delegate component](https://wirebox.ortusbooks.com/usage/wirebox-delegators) and requires ColdBox 7+. It should be added to an [`INotifiable`](../../inotifiable.md) instance.
 
 ### getNotifications
@@ -47,7 +44,20 @@ Returns all unread database notifications for this Notifiable.
 **Throws:** `Megaphone.Configuration.InvalidChannelProvider`
 {% endhint %}
 
+### getNotificationsAfter
 
-## Keyset pagination
+Loads a cursor page from this Notifiable's inbox. The delegate supplies the Notifiable for you:
 
-`getNotificationsAfter(channelName="database", afterCursor="", maxRows=25, constraints, archiveMode="active", unread=false)` delegates with this notifiable and returns DatabaseNotificationKeysetCursor. Read handles retain ownership and authorization constraints.
+```js
+var inbox = user.getNotificationsAfter( maxRows = 25 );
+```
+
+It accepts `channelName`, `afterCursor`, `maxRows`, `constraints`, `archiveMode`, and `unread`, with the same defaults as [DatabaseNotificationService.getNotificationsAfter](databasenotificationservice.md#getnotificationsafter). Loaded Notifications keep ownership and authorization checks for later mutations.
+
+**Return**: A [DatabaseNotificationKeysetCursor](databasenotificationkeysetcursor.md).
+
+### Other inbox methods
+
+The delegate also provides `getNotification()`, `countUnreadNotifications()`, `snapshotIds()`, `markSnapshotAsRead()`, and `pruneNotifications()`. Each uses this Notifiable, so you can call the service's inbox operations directly from your user or other Notifiable model.
+
+See [Notification Inboxes](../../../guides/notification-inboxes.md) for examples and read-state behavior.

@@ -2,4 +2,4 @@
 
 Megaphone requires ColdBox 6+ and either Adobe ColdFusion 2021+ or Lucee 5+.
 
-The optional [Java web push transport](../guides/web-push.md) requires Java 11+ and the separately installed SDK. The other notification APIs don't require that SDK.
+If you want to use the bundled [Java Web Push transport](../guides/web-push.md), you will also need Java 11+ and its optional SDK. You can use the other channels without installing that SDK.

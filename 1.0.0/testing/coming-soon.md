@@ -1,20 +1,35 @@
 # Module Tests
 
-Run the tests from a checkout of the [Megaphone module](https://github.com/coldbox-modules/megaphone), rather than an installed application dependency. Install the development dependencies with `box install`.
+Want to run Megaphone's tests locally? Start with a checkout of the [module repository](https://github.com/coldbox-modules/megaphone) and install its development dependencies with `box install`.
 
-The integration tests need a dedicated MySQL database. Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` for that database using the module's `.env.example`. Provision it before running the migrations. Keep tests out of your application or production database.
+### Setting up the test database
+
+The integration suite needs a dedicated MySQL database. Create it first, then use `.env.example` to configure `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`.
+
+Run the migrations before starting the suite:
 
 ```bash
 box install commandbox-migrations
 box migrate install
 box migrate up
-box task run taskFile=tasks/InstallWebPushSDK.cfc
 box server start
 box testbox run
 ```
 
-Use Java 11+ for the optional push SDK tests. The SDK installer downloads and verifies the JAR; the push preparation tests use transport fixtures and don't send to real devices. Migrations run before the suite, and persistence specs roll back their test writes.
+Persistence specs roll back their test writes. Use a database set aside for this suite, separate from your application's data.
 
-The 1.1.0 candidate passed the CI matrix on Lucee 5/6 and Adobe ColdFusion 2021/2023, each with ColdBox 6/7. The four existing ColdBox 6 skips remain. See [module PR #2](https://github.com/coldbox-modules/megaphone/pull/2) for the current checks.
+### Testing Web Push
 
-Your app still needs tests for its authorization constraints, preference scopes, queue transactions, worker handoff, provider callbacks, and browser enrollment. Verify actual providers and devices separately; passing the module suite doesn't establish those integrations.
+For the optional SDK tests, use Java 11+ and run the SDK installer before the suite:
+
+```bash
+box task run taskFile=tasks/InstallWebPushSDK.cfc
+```
+
+The installer downloads the pinned JAR and verifies its checksum. Push preparation tests use transport fixtures, so they don't send notifications to real devices.
+
+### Testing your application
+
+The module's engine matrix covers Lucee 5/6 and Adobe ColdFusion 2021/2023 with ColdBox 6/7. See [module PR #2](https://github.com/coldbox-modules/megaphone/pull/2) for the current check results.
+
+Your application's tests should also exercise its authorization constraints, preference scopes, queue transactions, worker handoff, and Provider callbacks. For Web Push, check browser enrollment and delivery on your actual devices as part of verifying the integration.

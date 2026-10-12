@@ -1,12 +1,74 @@
-# Event identities and saved plans
+# Event Identities
 
-Options are `namespace` (default `megaphone`), `eventKey` (generated if omitted), `version` (1), `occurredAt` and `availableDate` (now), and optional `admitAfter`. Occurrences older than the cutoff return an expired publication without recording work. Equality is admitted.
+Imagine your application queues a notification when an order is ready. If the request is repeated, you probably want the original notification back instead of sending another one. An event key gives Megaphone a way to recognize that repeat.
 
-Persist `plan.getMemento()` when admission must precede worker handoff. Restore it with `new megaphone.models.NotificationPlan({}, []).populateFromMemento(saved)` and call `queuePlan(plan)`. Its version 1 memento contains `event`, `deliveries`, and optional `admitAfter`. It preserves identities, payloads, hashes, destinations, and channel choices. A trusted producer may use `queuePlan(plan, alreadyAdmitted=true)` after validating its original persisted admission. This bypasses the replay cutoff; it does not replan the audience.
+### Choosing an event key
 
-Notifications extend `BaseNotification`, implement `via(notifiable)` and the usual `to{Provider}` methods, and may override `getChannelPreferences(notifiable)` to return a channel-name map of `{ enabled, source }`. The default enables the channels returned by `via()`. Synchronous delivery skips disabled channels. Durable delivery records them as suppressed; later opt-in does not revive them.
+Pass your event identity in the `options` struct when calling `plan()` or `queue()`:
 
-`getQueueProperties()` defaults to the explicitly populated properties. Notifications configured through setters must override it to return their durable properties. Store JSON data rather than components, closures, credentials, users, or prepared mail/request objects. `getNotificationMapping()` defaults to the WireBox identity; override it when notification type and reconstruction mapping differ. `getDeliveryContext(notifiable, channelName)` provides application routing context, separate from the notification properties.
+```js
+var publication = megaphone.queue(
+    notifiables = user,
+    notification = "OrderReadyNotification",
+    properties = { "orderId": orderId },
+    options = {
+        "namespace": "Orders",
+        "eventKey": orderId,
+        "version": 1,
+        "occurredAt": orderReadyDate
+    }
+);
+```
 
+The `namespace`, `eventKey`, and `version` together identify the event. Repeating that identity with the same payload hash returns the original work. It doesn't add new recipients, channels, or devices. If the saved payload differs, Megaphone rejects the replay.
 
-The event namespace, key, and version are its durable identity. Replay compares the saved payload hash and returns original work. Replanning cannot expand that work. Keep application hashes stable when upgrading existing data.
+You can leave these options out when you want a new event for every call:
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `namespace` | `megaphone` | Groups event keys belonging to the same application feature. |
+| `eventKey` | Generated UUID | Identifies this occurrence within the namespace. |
+| `version` | `1` | Distinguishes versions of the event. Must be a positive integer. |
+| `occurredAt` | Now | Records when the event happened. |
+| `availableDate` | Now | Sets when deliveries become available to a worker. |
+| `admitAfter` | Not set | Excludes occurrences before this cutoff. |
+
+If `occurredAt` is earlier than `admitAfter`, queueing returns an expired publication without saving work. An occurrence exactly at the cutoff is allowed.
+
+### Saving a plan
+
+Sometimes your application needs to save its decision to send before a worker can queue the deliveries. Use `plan()` to capture that decision and save its memento with your application record:
+
+```js
+var plan = megaphone.plan(
+    notifiables = user,
+    notification = "OrderReadyNotification",
+    properties = { "orderId": orderId },
+    options = { "namespace": "Orders", "eventKey": orderId }
+);
+var savedPlan = serializeJSON( plan.getMemento() );
+```
+
+Later, restore the plan and queue it:
+
+```js
+var plan = new megaphone.models.NotificationPlan( {}, [] )
+    .populateFromMemento( deserializeJSON( savedPlan ) );
+var publication = megaphone.queuePlan( plan );
+```
+
+The memento has `schemaVersion=1`, an `event`, a `deliveries` array, and an optional `admitAfter`. It keeps the original Notifiable identities, channel choices, device IDs, payload, occurrence time, availability dates, and hashes. Restoring it doesn't ask `via()` or preferences to choose a new audience.
+
+For example, a user who registers another device after the plan was saved won't receive the old notification on that device. A channel that was suppressed in the plan stays suppressed.
+
+{% hint style="info" %}
+A trusted producer that already saved and validated its original admission can call `queuePlan(plan, alreadyAdmitted=true)`. This bypasses the admission cutoff when handing off that saved work. It keeps the plan's captured recipients and channels.
+{% endhint %}
+
+### Keeping hashes stable
+
+Megaphone's default snapshot hasher sorts object keys and preserves array order. If your application already has persisted event hashes, keep using the same algorithm when upgrading.
+
+You can configure a `snapshotHasher` mapping under `durable`. Its `digest(value, context)` method receives a context containing `namespace` and `kind`, where `kind` is `payload` or `routing`. This lets your application retain its existing hash rules for replay comparisons.
+
+See [BaseNotification](../reference/basenotification.md#getqueueproperties) for choosing the properties saved in a plan.

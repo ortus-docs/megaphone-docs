@@ -28,28 +28,40 @@ Returns a map of channel names to Provider instances.
 
 **Return**: A `struct` map of channel names to Provider instances.
 
-## Durable notifications
+### plan
 
-Use the same notifiable and notification conventions for immediate and queued delivery:
+Captures the recipients, channels, preferences, devices, and properties for a queued Notification without saving or sending it. Like `notify()`, it accepts a Notification instance or a WireBox name.
 
-```js
-megaphone.notify(user, "OrderReadyNotification", { "orderId": orderId });
-var publication = megaphone.queue(
-    notifiables = user,
-    notification = "OrderReadyNotification",
-    properties = { "orderId": orderId },
-    options = { "namespace": "Orders", "eventKey": orderId, "version": 1 }
-);
-publication.getEvent().getId();
-publication.getDeliveries()[1].getId();
-```
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `notifiables` | `INotifiable` or array | true | | The Notifiables that should receive the Notification. |
+| `notification` | `string` or `BaseNotification` | true | | The Notification instance or its WireBox mapping. |
+| `properties` | `struct` | false | `{}` | Properties to populate on the Notification. |
+| `options` | `struct` | false | `{}` | Event identity, occurrence time, availability date, and optional admission cutoff. |
 
-`NotificationService.plan()` accepts the same arguments and returns a `NotificationPlan` without writing or sending. `queue()` plans and stores work in the caller's datasource transaction. `SendsNotifications` also provides `queue()`.
+**Return**: A `NotificationPlan`. See [Event Identities](../guides/event-identities.md) for the available options and saving its memento.
 
-Options are `namespace` (default `megaphone`), `eventKey` (generated if omitted), `version` (1), `occurredAt` and `availableDate` (now), and optional `admitAfter`. Occurrences older than the cutoff return an expired publication without recording work. Equality is admitted.
+{% hint style="danger" %}
+**Throws:** `Megaphone.Configuration.UnsupportedDurableProvider` if a selected channel does not support durable delivery.
+{% endhint %}
 
-Persist `plan.getMemento()` when admission must precede worker handoff. Restore it with `new megaphone.models.NotificationPlan({}, []).populateFromMemento(saved)` and call `queuePlan(plan)`. Its version 1 memento contains `event`, `deliveries`, and optional `admitAfter`. It preserves identities, payloads, hashes, destinations, and channel choices. A trusted producer may use `queuePlan(plan, alreadyAdmitted=true)` after validating its original persisted admission. This bypasses the replay cutoff; it does not replan the audience.
+### queue
 
-Notifications extend `BaseNotification`, implement `via(notifiable)` and the usual `to{Provider}` methods, and may override `getChannelPreferences(notifiable)` to return a channel-name map of `{ enabled, source }`. The default enables the channels returned by `via()`. Synchronous delivery skips disabled channels. Durable delivery records them as suppressed; later opt-in does not revive them.
+Plans and saves a Notification for delivery by a worker. It accepts the same arguments as `plan()`.
 
-`getQueueProperties()` defaults to the explicitly populated properties. Notifications configured through setters must override it to return their durable properties. Store JSON data rather than components, closures, credentials, users, or prepared mail/request objects. `getNotificationMapping()` defaults to the WireBox identity; override it when notification type and reconstruction mapping differ. `getDeliveryContext(notifiable, channelName)` provides application routing context, separate from the notification properties.
+The event, deliveries, and queue jobs are saved in the same datasource transaction. If queue insertion fails, the publication is rolled back. Repeating an event identity with the same payload hash returns its original work.
+
+**Return**: A `NotificationPublication`, with `getEvent()` and `getDeliveries()` accessors. See [Durable Delivery](../guides/durable-delivery.md) for configuration and examples.
+
+### queuePlan
+
+Queues a previously captured `NotificationPlan`. Use this when your application saved a plan before handing it to a worker.
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `plan` | `NotificationPlan` | true | | The original plan, including its captured recipients and channel choices. |
+| `alreadyAdmitted` | `boolean` | false | `false` | Bypasses the admission cutoff for a trusted producer that already saved and validated admission. |
+
+Queueing a saved plan keeps its original audience, payload, times, and hashes. It doesn't enable a channel that was suppressed in the plan.
+
+**Return**: A `NotificationPublication`. An occurrence before the plan's admission cutoff returns an expired publication without saving work, unless `alreadyAdmitted` is true.
