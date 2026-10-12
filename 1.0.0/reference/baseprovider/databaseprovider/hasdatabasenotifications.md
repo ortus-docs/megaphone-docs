@@ -46,3 +46,8 @@ Returns all unread database notifications for this Notifiable.
 
 **Throws:** `Megaphone.Configuration.InvalidChannelProvider`
 {% endhint %}
+
+
+## Keyset pagination
+
+`getNotificationsAfter(channelName="database", afterCursor="", maxRows=25, constraints, archiveMode="active", unread=false)` delegates with this notifiable and returns DatabaseNotificationKeysetCursor. Read handles retain ownership and authorization constraints.

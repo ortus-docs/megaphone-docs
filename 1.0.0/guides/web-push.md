@@ -1,47 +1,15 @@
-# Optional Java Web Push transport
+# Web Push provider
 
-`WebPushTransport` uses Java 11+ and the optional
-[zerodep-web-push-java SDK](https://github.com/st-user/zerodep-web-push-java).
-Run this from the installed module directory:
+`WebPushProvider` participates in `via()` using its configured channel name. Notifications implement `toWebPush(notifiable, delivery)`; `routeNotificationForWebPush()` on a notifiable may provide device metadata, otherwise owned active registrations are used. Device exclusions apply per notification type. No eligible destination produces suppressed work without a phantom send. One expired device does not cancel another.
+
+`PushSubscriptionService@megaphone.register(notifiable, subscription, label, existingId="", expiresDate, channelName="push")` validates and encrypts browser subscriptions internally. Its public registration metadata excludes endpoints, hashes, and encrypted keys. Use `getRegistrations`, `rename`, `disconnect`, `setExcluded`, `getExcludedIds`, `pruneInactive`, and `deleteNotifiable` for device lifecycle. `retireExpired(notifiable, clock, limit)` retires expired destinations independently. `getActiveRegistration` is for trusted delivery infrastructure and must not be exposed to clients.
+
+Push channel properties may configure `enabled`, `origin`, `publicKey`, `privateKey`, `subject`, `allowedHosts`, `activeStorageKeyId`, and `storageKeys` directly. The bundled runtime accepts base64 PKCS8/X509 VAPID keys and a storage keyring of base64 AES-256 keys. An optional runtime mapping implements `enabled`, `context(notifiable)`, `cipher`, and `transport`; use it to retain existing recipient/origin encryption contexts. Infrastructure is resolved lazily so disabled or incomplete push does not prevent other channels from starting.
+
+Install the optional Java 11+ SDK from the installed module directory:
 
 ```sh
 box task run taskFile=tasks/InstallWebPushSDK.cfc
 ```
 
-The task downloads version 2.1.5 from Maven Central and checks SHA-256
-`1337acba24004f2a702275b676eb3862e402c8775d3031b26464f0b18d3ba989`
-before saving the JAR under `resources/java/webpush`. If the file already exists,
-it checks that file. Add this step to your deployment build if you use push;
-the regular Megaphone install doesn't download the SDK.
-
-Load that directory with your application's Java loader. On Adobe 2021 and
-2023, add it to `this.javaSettings.loadPaths` and have your class factory call
-`createObject( "java", className )`. Pass its `create`
-class factory, the SDK's VAPID key pair, a contact subject (`mailto:` or HTTPS),
-and the push-service DNS hosts you trust to `new WebPushTransport(...)`.
-Host entries can be exact names or `*.example.com` patterns. The wildcard matches
-subdomains, not the parent domain. Configure these hosts in your app; don't take
-the list from browser input.
-
-The default client disables redirects and sets connect and request timeouts.
-You can pass an `httpClient` to use your own transport or a test fixture. It must
-keep those timeout and redirect rules and must not retry automatically.
-
-`prepare(subscription, payload, ttlSeconds=3600)` validates the HTTPS endpoint,
-keys, and single-record UTF-8 payload size, then signs with VAPID and encrypts
-with `aes128gcm`. It doesn't make a network request. TTL can be zero through seven
-days. Prepare the request in your eligibility callback, before marking transport
-as started, and recheck registration ownership and notification access there.
-Keep the prepared request internal; its URI and headers contain private data.
-
-After the dispatcher marks transport as started, `sendPrepared(request)` sends
-once and discards the response body. It returns a `WebPushResponsePolicy` outcome,
-or ambiguous acceptance if transport fails. When `retireSubscription=true`,
-retire that recipient's registration. One failed or expired device shouldn't
-cancel another device's delivery. Sending push doesn't create inbox entries or
-change preferences.
-
-After installing the SDK, you can run
-`tests.specs.integration.WebPushPreparationSpec` to check SDK request preparation
-and transport fixtures. It doesn't send to real devices. Test your actual push
-providers, service worker, enrollment flow, and devices separately.
+The installer verifies the pinned SDK checksum. Enrollment and service-worker integration remain application responsibilities. Registration does not change preferences or publish activity. Disconnect devices on logout/account switch. Provider tests use fixture HTTP clients; verify real devices separately before deployment.

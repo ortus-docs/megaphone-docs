@@ -1,84 +1,71 @@
-# Durable delivery
+## Durable notifications
 
-Existing synchronous consumers can keep using their current APIs. To use durable
-delivery, apply the delivery and attempt migrations, including the delivery
-timestamp precision migration. It keeps MySQL from rounding newly queued work
-into the next second. PostgreSQL already preserves that precision.
-`DurableNotificationService@megaphone.publish(event, intents, queueAdapter)`
-records an event and its recipient/channel/device work in one transaction.
-Each intent supplies `recipientType`, `recipientId`, `channel`, optional
-`deviceId`, explicit `enabled`, `routingData`, `routingHash`, and optional
-`availableDate`. Disabled channels are saved as suppressed. Enabling one later
-doesn't revive old work. Publishing the same event again returns the existing
-work without adding recipients or channels that became eligible afterward.
+Use the same notifiable and notification conventions for immediate and queued delivery:
 
-Your optional queue adapter implements `enqueue(delivery)`. Save a job reference
-in the same datasource and transaction, without sending to a provider. A queue
-insertion failure rolls back publication, even if the caller catches it inside
-the domain transaction. Without an adapter, use `DeliveryStore.due(limit, clock)`
-from a scheduler. Duplicate jobs are safe because only the current claim token
-can start transport.
+```cfc
+megaphone.notify(user, "OrderReadyNotification", { "orderId": orderId });
+var publication = megaphone.queue(
+    notifiables = user,
+    notification = "OrderReadyNotification",
+    properties = { "orderId": orderId },
+    options = { "namespace": "Orders", "eventKey": orderId, "version": 1 }
+);
+publication.getEvent().getId();
+publication.getDeliveries()[1].getId();
+```
 
-`due(limit=100, clock=now(), constraints)` takes an optional backend query callback
-before ordering and limiting the batch. Use it to exclude deliveries that already
-have live queue jobs so they don't crowd out missing jobs. Keep queue-specific
-queries in your adapter and recheck under its concurrency guard before enqueueing.
-Selecting candidates alone doesn't prevent two schedulers from acting on them.
+`NotificationService.plan()` accepts the same arguments and returns a `NotificationPlan` without writing or sending. `queue()` plans and stores work in the caller's datasource transaction. `SendsNotifications` also provides `queue()`.
 
-`DeliveryStore@megaphone` provides `enqueue`, `find`, `forEvent`, `claim`,
-`startTransport`, `complete`, `due`, `attempts`, and `recoverExpired`.
-Constructor properties let you set `table`, `attemptsTable`, `eventsTable`, and
-`queryOptions`. Use the domain transaction's datasource for events, deliveries,
-and queue jobs. Queue delivery IDs rather than serialized users or credentials.
+Options are `namespace` (default `megaphone`), `eventKey` (generated if omitted), `version` (1), `occurredAt` and `availableDate` (now), and optional `admitAfter`. Occurrences older than the cutoff return an expired publication without recording work. Equality is admitted.
 
-`DeliveryDispatcher@megaphone.dispatch(id, eligibility, sender, leaseSeconds=60,
-maxAttempts=5, retrySeconds=30)` claims work and calls your callbacks:
+Persist `plan.getMemento()` when admission must precede worker handoff. Restore it with `new megaphone.models.NotificationPlan({}, []).populateFromMemento(saved)` and call `queuePlan(plan)`. Its version 1 memento contains `event`, `deliveries`, and optional `admitAfter`. It preserves identities, payloads, hashes, destinations, and channel choices. A trusted producer may use `queuePlan(plan, alreadyAdmitted=true)` after validating its original persisted admission. This bypasses the replay cutoff; it does not replan the audience.
 
-- `eligibility(delivery)` prepares content and checks current access, preferences,
-  registration ownership, feature availability, and source revision just before
-  transport. Return `status` as `ready`, `suppressed`, `deferred`, or `permanent`,
-  with optional safe reason, retry date, and prepared content. You supply the
-  application's authorization rules.
-- `sender(delivery, prepared)` sends through your channel adapter. Return `outcome`
-  as `accepted`, `retryable`, `permanent`, or `ambiguous`, with optional provider
-  reference, safe reason, and retry date. Use `retryable` only when you know the
-  provider rejected the request before acceptance. An uncertain timeout is
-  `ambiguous`.
+Notifications extend `BaseNotification`, implement `via(notifiable)` and the usual `to{Provider}` methods, and may override `getChannelPreferences(notifiable)` to return a channel-name map of `{ enabled, source }`. The default enables the channels returned by `via()`. Synchronous delivery skips disabled channels. Durable delivery records them as suppressed; later opt-in does not revive them.
 
-The transport-start marker must succeed before sending. If a lease expires before
-that point, a new worker can retry and the old token can no longer start transport.
-If it expires or throws afterward, acceptance is ambiguous and automatic resends
-stop. A late result from that same lease can still record acceptance. Establish a
-definite outcome before retrying. Provider acceptance doesn't mean the recipient
-received or read the message.
+`getQueueProperties()` defaults to the explicitly populated properties. Notifications configured through setters must override it to return their durable properties. Store JSON data rather than components, closures, credentials, users, or prepared mail/request objects. `getNotificationMapping()` defaults to the WireBox identity; override it when notification type and reconstruction mapping differ. `getDeliveryContext(notifiable, channelName)` provides application routing context, separate from the notification properties.
 
-Feature pauses and preparation failures before transport don't use up the actual
-send allowance. `attemptCount` counts claims; `transportCount` counts starts.
-`recoverExpired(limit=100, clock)` checks expired processing rows in batches.
-Run it alongside your due-work scheduler so lost jobs don't leave work stranded.
-Claim and policy state is committed before calling the provider. Don't wrap
-network I/O in a new domain transaction in your sender callback.
+### Module configuration
 
-`reconcileAccepted(id, acceptance, clock=now())` settles work using a verified
-receipt, including late acceptance or an import from the previous delivery owner.
-The callback receives the immutable delivery and returns `{ accepted: false }`
-or `{ accepted: true, providerReference: "receipt-id" }`. Verify that the receipt
-belongs to that delivery. Keep the callback local, without external I/O.
-Confirmed acceptance prevents queued or running work from sending again.
-Existing attempt outcomes stay attached to their original attempts. Authorize
-this operation in your app before exposing it through an endpoint.
+```cfc
+moduleSettings.megaphone = {
+    "channels": {
+        "database": { "provider": "DatabaseProvider@megaphone", "properties": {} },
+        "email": { "provider": "EmailProvider@megaphone", "properties": { "durableAdapter": "ActivityMailAdapter" } },
+        "push": { "provider": "WebPushProvider@megaphone", "properties": { "runtime": "ApplicationPushRuntime" } }
+    },
+    "storage": {
+        "events": {}, "deliveries": {}, "preferences": {}, "subscriptions": {}
+    },
+    "durable": {
+        "queueAdapter": "NotificationQueue",
+        "notifiableResolver": "NotifiableResolver",
+        "eligibilityPolicy": "NotificationEligibility",
+        "snapshotHasher": "NotificationSnapshotHasher@megaphone",
+        "leaseSeconds": 60, "maxAttempts": 5, "retrySeconds": 30,
+        "maxRecoveryAttempts": 5, "maxRecoveryAllowance": 45
+    }
+};
+```
 
-`pruneAttempts(beforeDate, limit=200)` removes diagnostics for terminal deliveries
-and keeps the provider reference. `pruneResolvedEvents(eventsBefore,
-deliveriesBefore, limit=100)` removes event identities and their work only after
-the replay window, when every delivery is terminal and old enough. Pending or
-ambiguous work keeps its evidence. Reject old events outside your replay window
-before publishing; use `importNotification` when you only need to import history.
-Neither cleanup method removes inbox entries or domain audit history.
+Storage settings accept `table`, `queryOptions`, and `datasource`. Deliveries also accept `attemptsTable`, `eventsTable`, and `recoveriesTable`; subscriptions accept `exclusionsTable`. Adapt migrations when using custom table names, and keep related table settings consistent. New public APIs use `notifiableType`, `notifiableId`, and `channelName`; existing storage columns remain unchanged.
 
-Set your cutoffs in scheduled configuration. For example, you might keep terminal
-attempt diagnostics for 90 days and resolved event identities for 365 days.
-The event cutoff must be beyond your supported replay window. The inbox count
-cap is a separate setting.
+A queue adapter implements `enqueue(delivery)` and stores only `delivery.getId()` in the same datasource transaction. It must not send there. Queue insertion failure rolls back publication. Without an adapter, schedule `NotificationDeliveryService.getDueDeliveries()` and `recoverExpired()`.
 
-See [delivery operations](delivery-operations.md) for recovery, state counts, and replay cutoffs.
+A notifiable resolver implements `resolve(type, id)` and returns the matching current notifiable or null. An optional durable.deliveryPolicy mapping implements getDispatchOptions(id) for configured lease, attempt, and retry options. Explicit dispatch options take precedence.
+
+An optional eligibility policy implements `check(delivery, notifiable, event)` and returns a `DeliveryPreparation` with status `ready`, `suppressed`, `deferred`, or `permanent`, plus optional reason and retry date. Application authorization, source revision, and feature checks belong here. Preferences are checked before transport too.
+
+The default snapshot hasher sorts object keys and preserves array order. An application hasher implements `digest(value, context)`, where context includes `namespace` and `kind` (`payload` or `routing`). Retain an existing canonical hash algorithm when upgrading persisted events.
+
+### Providers and dispatch
+
+Providers may implement the optional `IDurableNotificationProvider` capability:
+
+- `prepareDelivery(notifiable, notification, delivery)` returns a `DeliveryPreparation`; prepare content without provider I/O.
+- `sendDelivery(prepared, delivery)` returns a `DeliveryResult` with status `accepted`, `retryable`, `permanent`, or `ambiguous` and optional reason, provider reference, and retry date.
+
+Use `prepared.getData()` for transient transport objects. Its memento contains status metadata, not transport data. Existing synchronous `notify()` still returns a `BaseNotification`. A provider lacking durable support is rejected during planning. Durable email requires a configured adapter that supplies explicit acceptance evidence.
+
+`NotificationDeliveryService.dispatch(id, options={})` resolves the saved notification and registered channel, checks current eligibility, prepares delivery, checks again, and records transport start before sending. It returns a `DeliveryResult`. Options can override lease, attempt, and retry settings.
+
+Duplicate jobs cannot share a lease. Preparation failures and feature pauses do not consume transport allowance. An exception after transport starts is ambiguous and cannot trigger an automatic resend. Acceptance does not establish receipt or read state. Do not wrap provider I/O in an application transaction.

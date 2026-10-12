@@ -53,6 +53,7 @@
     * [DatabaseNotificationService](reference/baseprovider/databaseprovider/databasenotificationservice.md)
     * [HasDatabaseNotifications](reference/baseprovider/databaseprovider/hasdatabasenotifications.md)
     * [DatabaseNotificationCursor](reference/baseprovider/databaseprovider/databasenotificationcursor.md)
+    * [DatabaseNotificationKeysetCursor](reference/baseprovider/databaseprovider/databasenotificationkeysetcursor.md)
     * [DatabaseNotification](reference/baseprovider/databaseprovider/databasenotification.md)
   * [EmailProvider](reference/baseprovider/emailprovider.md)
   * [SlackProvider](reference/baseprovider/slackprovider/README.md)
