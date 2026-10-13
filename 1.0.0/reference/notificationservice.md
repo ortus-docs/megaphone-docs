@@ -49,9 +49,9 @@ Captures the recipients, channels, preferences, devices, and properties for a qu
 
 Plans and saves a Notification for delivery by a worker. It accepts the same arguments as `plan()`.
 
-By default, the bundled cbq adapter inserts a delivery job. You can override `durable.queueAdapter` to use another adapter, or set it to an empty string for polling. The event, deliveries, and database queue jobs are saved in the same datasource transaction. If queue insertion fails, the publication is rolled back. Repeating an event identity with the same payload hash returns its original work.
+The bundled cbq adapter inserts a delivery job by default. The event, deliveries, and database queue jobs are saved in the same datasource transaction. If queue insertion fails, the publication is rolled back. Repeating an event identity with the same payload hash returns its original work.
 
-**Return**: A `NotificationPublication`, with `getEvent()` and `getDeliveries()` accessors. See [Durable Delivery](../guides/durable-delivery.md) for configuration and examples.
+**Return**: A `NotificationPublication`, with `getEvent()` and `getDeliveries()` accessors. See [Durable Delivery](../guides/durable-delivery.md) for cbq setup and examples. Its final section covers [custom queue adapters](../guides/durable-delivery.md#making-a-custom-queue-adapter).
 
 ### queuePlan
 
