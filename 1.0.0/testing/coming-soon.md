@@ -1,6 +1,6 @@
 # Module Tests
 
-Want to run Megaphone's tests locally? Use JDK 11, start with a checkout of the [module repository](https://github.com/coldbox-modules/megaphone), and install its development dependencies with `box install`.
+Want to run Megaphone's tests locally? Start with a checkout of the [module repository](https://github.com/coldbox-modules/megaphone), and install its development dependencies with `box install`. Use the Java version required by your selected engine. The checkout defaults to Adobe ColdFusion 2023 on JDK 17.
 
 ### Setting up the test database
 
@@ -26,7 +26,7 @@ For the SDK tests, use Java 11+. The checkout's `box install` command installs t
 
 ### Testing your application
 
-The module's engine matrix covers Lucee 5/6 and Adobe ColdFusion 2021/2023 with ColdBox 6/7. See [module PR #2](https://github.com/coldbox-modules/megaphone/pull/2) for the current check results.
+The module's engine matrix covers Lucee 5/6 and Adobe ColdFusion 2021/2023 with ColdBox 6/7. It uses JDK 11 for Lucee 5/6 and Adobe 2021, and JDK 17 for Adobe 2023. Scheduled bleeding-edge engine jobs use JDK 21. BoxLang is not currently in this module matrix; an application running BoxLang needs JDK 21. See [module PR #2](https://github.com/coldbox-modules/megaphone/pull/2) for the current check results.
 
 Your application's tests should also exercise its authorization constraints, preference scopes, queue transactions, worker handoff, and Provider callbacks. For Web Push, check browser enrollment and delivery on your actual devices as part of verifying the integration.
 
