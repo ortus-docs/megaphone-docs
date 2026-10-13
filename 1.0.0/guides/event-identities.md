@@ -49,15 +49,24 @@ var plan = megaphone.plan(
 var savedPlan = serializeJSON( plan.getMemento() );
 ```
 
+Add a method provider to the service that restores your saved plans:
+
+```js
+/** Supplies a fresh plan through WireBox. */
+private megaphone.models.NotificationPlan function newNotificationPlan()
+    provider="NotificationPlan@megaphone" {
+}
+```
+
 Later, restore the plan and queue it:
 
 ```js
-var plan = new megaphone.models.NotificationPlan()
+var plan = newNotificationPlan()
     .populateFromMemento( deserializeJSON( savedPlan ) );
 var publication = megaphone.queuePlan( plan );
 ```
 
-The constructor defaults `event` to `{}` and `deliveries` to `[]`; `populateFromMemento()` replaces them with the saved values. The memento has `schemaVersion=1`, an `event`, a `deliveries` array, and an optional `admitAfter`. It keeps the original Notifiable identities, channel choices, device IDs, payload, occurrence time, availability dates, and hashes. Restoring it doesn't ask `via()` or preferences to choose a new audience.
+WireBox supplies an empty plan; `populateFromMemento()` fills it with the saved values. The memento has `schemaVersion=1`, an `event`, a `deliveries` array, and an optional `admitAfter`. It keeps the original Notifiable identities, channel choices, device IDs, payload, occurrence time, availability dates, and hashes. Restoring it doesn't ask `via()` or preferences to choose a new audience.
 
 For example, a user who registers another device after the plan was saved won't receive the old notification on that device. A channel that was suppressed in the plan stays suppressed.
 
