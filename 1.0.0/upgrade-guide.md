@@ -20,22 +20,6 @@ Megaphone uses its bundled `CBQNotificationQueue` adapter by default, but cbq is
 
 You can keep an existing `queue.queueAdapter` override. If you previously left the adapter unset to poll saved deliveries, explicitly set it to an empty string to retain that behavior.
 
-### Moving from the unreleased durable APIs
-
-If you adopted an earlier 1.1.0 candidate, update these calls:
-
-| Earlier API | Use instead |
-| --- | --- |
-| `DurableNotificationService.publish()` | `NotificationService.plan()`, `queue()`, and `queuePlan()` |
-| `DeliveryDispatcher` | `NotificationDeliveryService.dispatch()` |
-| `getNotificationSlice()` | `getNotificationsAfter()`, returning a `DatabaseNotificationKeysetCursor` |
-
-You now define durable notifications using the same Notification, Notifiable, Provider, and delegate patterns as synchronous delivery. See [Durable Delivery](guides/durable-delivery.md) for the queue and Provider setup. Use the public services for delivery operations, preferences, and subscriptions; stores handle persistence behind those services.
-
-If your application saved admission documents using the earlier shape, add a reader that translates those records into the version 1 `NotificationPlan` memento. Preserve the original recipients, channel choices, device IDs, and occurrence time. Reconstruct the saved decision instead of calling `plan()` again against today's audience and preferences.
-
-Keep your existing snapshot hash algorithm configured when replaying old events. If you already have encrypted push subscriptions, retain their encryption contexts too. The [Event Identities](guides/event-identities.md) and [Push Registrations](guides/push-registrations.md) guides cover those settings.
-
 ### Keeping the first read timestamp
 
 `markAsRead(readDate)` and `markAllAsRead(readDate)` retain their released behavior: they replace the read timestamp. If your application wants to preserve the first read time, switch those calls to `markAsReadIfUnread()` and `markAllAsReadIfUnread()`.
