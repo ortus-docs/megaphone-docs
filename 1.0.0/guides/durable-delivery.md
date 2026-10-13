@@ -4,7 +4,7 @@ Want to save a Notification now and let a worker send it later? Megaphone includ
 
 ### Setting up cbq
 
-The default queue uses cbq's database Provider, the `default` connection, and the `notifications` queue. Start by registering your channels and telling Megaphone how to load a Notifiable in the worker:
+Megaphone sends jobs to the `notifications` queue on cbq's registered default connection. cbq uses the Provider configured for that connection. Choose your queue name and tell Megaphone how to load a Notifiable in the worker:
 
 ```js
 moduleSettings.megaphone = {
@@ -15,6 +15,7 @@ moduleSettings.megaphone = {
         }
     },
     "durable": {
+        "queueName": "notifications",
         "notifiableResolver": "NotifiableResolver"
     }
 };
@@ -22,11 +23,11 @@ moduleSettings.megaphone = {
 
 `NotifiableResolver` is your application component. Its `resolve(type, id)` method returns the current Notifiable, or null if it no longer exists. Megaphone uses it to load the recipient when the job runs.
 
-Apply Megaphone's migrations and cbq's migrations through your application's migration ledger before queueing. cbq's migrations are in its `resources/database/migrations` directory. Use the same datasource for the delivery records and cbq jobs so they commit together. Megaphone's migrations don't create cbq's tables.
+Register the connection and workers in your application's cbq configuration. Megaphone uses those registrations and leaves the Provider choice to cbq. If you want a different connection from cbq's default, set `durable.queueConnection` to its registered name.
 
-If your application doesn't have a cbq configuration, Megaphone supplies a database connection using the delivery store's query options. With `notifiableResolver` configured, it also defines one worker for the `notifications` queue. Applications that only use `notify()` don't start that worker or need queue tables.
+Apply Megaphone's migrations through your application's migration ledger before queueing. Follow your chosen queue Provider's setup instructions too. For cbq's database Provider, that includes its migrations from `resources/database/migrations`; other Providers have their own requirements.
 
-If you already configure cbq, Megaphone keeps your configuration. Use its database Provider on the delivery datasource, and add a worker for notifications. For example, inside your cbq config's `configure()` method:
+For a cbq Provider that uses worker pools, add a worker for the notification queue. This example uses a connection named `default`; use the name of your registered connection:
 
 ```js
 newWorkerPool( "notifications" )
@@ -37,9 +38,9 @@ newWorkerPool( "notifications" )
     .maxAttempts( 1 );
 ```
 
-Each job carries only the delivery ID. Megaphone loads the saved Notification and decides whether another job is needed after a known retryable or deferred outcome. cbq gets one attempt per job, and an ambiguous outcome never schedules another send.
+Each job carries only the delivery ID. Megaphone loads the saved Notification and decides whether another attempt is allowed after a known retryable, deferred, or busy outcome. It releases the job through cbq with the appropriate backoff, so the registered Provider handles timing. Unhandled errors do not get an automatic extra attempt, and an ambiguous outcome never schedules another send.
 
-The bundled adapter requires cbq's database Provider. It rejects other Providers, including the synchronous Provider, before publication can commit or transport can begin. Use cbq's `registerWorkers=false` setting on a process that only publishes jobs.
+The bundled adapter works with the Provider on your registered connection. That includes synchronous execution when you choose cbq's synchronous Provider. For background Providers, use cbq's `registerWorkers=false` setting on a process that only publishes jobs.
 
 ### Queueing a Notification
 
@@ -58,7 +59,9 @@ var publication = megaphone.queue(
 
 You can pass a Notification instance or its WireBox name, along with a struct of properties to populate. Megaphone calls `via()` for each Notifiable, checks their channel preferences, and saves the resulting deliveries. The bundled cbq job sends them through the registered Providers.
 
-Megaphone saves the event, deliveries, and cbq jobs in the same datasource transaction. If inserting a job fails, it rolls back the publication too.
+Megaphone saves the event and deliveries in a transaction and asks cbq to enqueue each delivery ID. An enqueue failure rolls back those Megaphone records.
+
+When cbq's database Provider uses the same datasource, job insertion joins that transaction too. External queue Providers follow their own commit behavior: a database rollback can't remove an already published external job or undo a synchronous send. For external workers, arrange the commit handoff so they can see the saved delivery before consuming its ID.
 
 The returned `NotificationPublication` gives you the saved event and its deliveries:
 
@@ -105,7 +108,7 @@ You can override `getChannelPreferences(notifiable)` to apply your application's
 
 ### Configuring durable delivery
 
-You can choose a cbq connection, queue name, and timeout in the `durable` settings. Match the connection and queue to your cbq worker configuration. The defaults are `default`, `notifications`, and 60 seconds.
+You can choose a cbq connection, queue name, and timeout in the `durable` settings. Match the connection and queue to your cbq worker configuration. By default, Megaphone uses cbq's default connection, the `notifications` queue, and a 60-second timeout.
 
 As your application needs more channels or policies, you can add them to the same module settings:
 
@@ -132,7 +135,7 @@ moduleSettings.megaphone = {
         "subscriptions": {}
     },
     "durable": {
-        "queueConnection": "default",
+        "queueConnection": "",
         "queueName": "notifications",
         "queueTimeout": 60,
         "notifiableResolver": "NotifiableResolver",
@@ -179,7 +182,7 @@ Each delivery has a lease so two workers can't send it at the same time. Prepara
 If a transport throws after sending starts, Megaphone may not know whether the Provider accepted the notification. It records an ambiguous outcome and does not automatically resend it. See [Delivery Operations](delivery-operations.md) for reconciling Provider receipts.
 {% endhint %}
 
-An accepted delivery means the Provider accepted it. It doesn't mean the user has received or read it. Keep Provider I/O outside application transactions.
+An accepted delivery means the notification Provider accepted it. It doesn't mean the user has received or read it. Background queue Providers let the worker send after publication; a synchronous queue Provider executes the job inline when it is enqueued.
 
 ### Supporting durable delivery in a Provider
 
@@ -219,7 +222,7 @@ component singleton {
 }
 ```
 
-`JobQueue` and its `enqueue()` method in this example belong to your application. That method should insert the job in the same datasource transaction as publication. Let insertion failures propagate so Megaphone can roll back the event and deliveries too. The adapter queues the ID; sending happens later in the worker.
+`JobQueue` and its `enqueue()` method in this example belong to your application. Let enqueue failures propagate so Megaphone can roll back the event and deliveries. A database queue can join the publication transaction; an external queue needs its own commit handoff, just as it does when used through cbq. The adapter queues the ID; sending happens later in the worker.
 
 Register the adapter in your module settings:
 

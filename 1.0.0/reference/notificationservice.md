@@ -49,7 +49,7 @@ Captures the recipients, channels, preferences, devices, and properties for a qu
 
 Plans and saves a Notification for delivery by a worker. It accepts the same arguments as `plan()`.
 
-The bundled cbq adapter inserts a delivery job by default. The event, deliveries, and database queue jobs are saved in the same datasource transaction. If queue insertion fails, the publication is rolled back. Repeating an event identity with the same payload hash returns its original work.
+The bundled cbq adapter dispatches a delivery job to the configured queue, using the Provider on its registered connection. Megaphone saves the event and deliveries transactionally; an enqueue failure rolls back those records. Queue-side rollback and execution timing follow the chosen Provider. A database queue on the same datasource can join the transaction. Repeating an event identity with the same payload hash returns its original work.
 
 **Return**: A `NotificationPublication`, with `getEvent()` and `getDeliveries()` accessors. See [Durable Delivery](../guides/durable-delivery.md) for cbq setup and examples. Its final section covers [custom queue adapters](../guides/durable-delivery.md#making-a-custom-queue-adapter).
 

@@ -4,7 +4,7 @@ If your application uses synchronous `notify()` calls, you can keep those calls 
 
 ### Applying the migrations
 
-Run the module migrations through cfmigrations and its migration ledger, using the same datasource as your domain writes and queue jobs. Keep previously applied migrations unchanged.
+Run the module migrations through cfmigrations and its migration ledger, using the same datasource as your domain writes. A database queue on that datasource can share the publication transaction. Keep previously applied migrations unchanged.
 
 The additive `2026_10_12_180000_add_megaphone_notification_mapping.cfc` migration runs after the existing migrations. It adds a nullable mapping so workers can reconstruct Notifications for stored events. Backfill the mapping for known notification types in your application. Keep their existing payloads, hashes, delivery IDs, and queue references.
 
@@ -12,7 +12,7 @@ If you use custom table names, update the migration configuration to match your 
 
 ### Queueing with cbq
 
-Megaphone now includes cbq and uses its bundled `CBQNotificationQueue` adapter by default. Apply cbq's queue migrations before calling `queue()`. If your application already configures cbq, keep that configuration and add a worker for the notification queue. See [Durable Delivery](guides/durable-delivery.md#setting-up-cbq) for setup.
+Megaphone now includes cbq and uses its bundled `CBQNotificationQueue` adapter by default. Choose a queue on a registered cbq connection and follow that connection Provider's setup instructions. Database migrations are needed when you use cbq's database Provider. Keep your application's cbq configuration and add a notification worker when your Provider uses worker pools. See [Durable Delivery](guides/durable-delivery.md#setting-up-cbq) for setup.
 
 You can keep an existing `durable.queueAdapter` override. If you previously left the adapter unset to poll saved deliveries, explicitly set it to an empty string to retain that behavior.
 
