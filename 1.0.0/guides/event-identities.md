@@ -71,6 +71,6 @@ A trusted producer that already saved and validated its original admission can c
 
 Megaphone's default snapshot hasher sorts object keys and preserves array order. If your application already has persisted event hashes, keep using the same algorithm when upgrading.
 
-You can configure a `snapshotHasher` mapping under `durable`. Its `digest(value, context)` method receives a context containing `namespace` and `kind`, where `kind` is `payload` or `routing`. This lets your application retain its existing hash rules for replay comparisons.
+You can configure a `snapshotHasher` mapping under `queue`. Its `digest(value, context)` method receives a context containing `namespace` and `kind`, where `kind` is `payload` or `routing`. This lets your application retain its existing hash rules for replay comparisons.
 
 See [BaseNotification](../reference/basenotification.md#getqueueproperties) for choosing the properties saved in a plan.

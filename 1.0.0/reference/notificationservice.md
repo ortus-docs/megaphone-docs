@@ -38,10 +38,10 @@ Captures the recipients, channels, preferences, devices, and properties for a qu
 | `notification` | `string` or `BaseNotification` | true | | The Notification instance or its WireBox mapping. |
 | `properties` | `struct` | false | `{}` | Properties to populate on the Notification. |
 | `options` | `struct` | false | `{}` | Event identity, occurrence time, availability date, and optional admission cutoff. |
-| `connection` | `string` | false | | A registered cbq connection. Overrides `durable.queueConnection`; otherwise cbq uses its default connection. |
-| `queue` | `string` | false | | A queue on the selected connection. Omit it to use that connection's default queue. |
+| `connection` | `string` | false | | A registered cbq connection. Overrides `queue.defaultConnection`; otherwise cbq uses its default connection. |
+| `queue` | `string` | false | | A queue on the selected connection. Overrides `queue.defaultQueue`; otherwise cbq uses the selected connection's default queue. |
 
-With cbq's standard defaults, omitted `connection` and `queue` arguments both use `default`. A configured `durable.queueConnection` or custom cbq default takes precedence.
+With cbq's standard defaults, omitted `connection` and `queue` arguments both use `default`. Configured `queue.defaultConnection` and `queue.defaultQueue` settings or custom cbq defaults take precedence.
 
 **Return**: A `NotificationPlan`. See [Event Identities](../guides/event-identities.md) for the available options and saving its memento.
 

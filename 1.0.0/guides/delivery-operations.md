@@ -33,7 +33,7 @@ Recovery gives a retryable or permanently rejected delivery another transport al
 
 Megaphone checks the current version and eligibility, records a recovery receipt, and inserts the job atomically. It returns a `DeliveryRecoveryResult`. Repeating the same request key returns the original receipt without inserting another job.
 
-Only retryable or permanently rejected work can recover. Accepted, ambiguous, suppressed, and processing deliveries can't be recovered this way. The default limits are five additional transports per request and 45 over a delivery's lifetime. Change `maxRecoveryAttempts` and `maxRecoveryAllowance` in the module's `durable` settings if your application needs different limits.
+Only retryable or permanently rejected work can recover. Accepted, ambiguous, suppressed, and processing deliveries can't be recovered this way. The default limits are five additional transports per request and 45 over a delivery's lifetime. Change `maxRecoveryAttempts` and `maxRecoveryAllowance` in the module's `queue` settings if your application needs different limits.
 
 ### Reconciling acceptance
 

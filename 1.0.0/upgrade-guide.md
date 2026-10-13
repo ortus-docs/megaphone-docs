@@ -14,7 +14,9 @@ If you use custom table names, update the migration configuration to match your 
 
 Megaphone now includes cbq and uses its bundled `CBQNotificationQueue` adapter by default. Choose a queue on a registered cbq connection and follow that connection Provider's setup instructions. Database migrations are needed when you use cbq's database Provider. Keep your application's cbq configuration and add a notification worker when your Provider uses worker pools. See [Durable Delivery](guides/durable-delivery.md#setting-up-cbq) for setup.
 
-You can keep an existing `durable.queueAdapter` override. If you previously left the adapter unset to poll saved deliveries, explicitly set it to an empty string to retain that behavior.
+You can keep an existing `queue.queueAdapter` override. If you previously left the adapter unset to poll saved deliveries, explicitly set it to an empty string to retain that behavior.
+
+The queue settings now live under `moduleSettings.megaphone.queue`. When updating an earlier candidate, rename the `durable` group to `queue` and `queueConnection` to `defaultConnection`.
 
 ### Moving from the unreleased durable APIs
 

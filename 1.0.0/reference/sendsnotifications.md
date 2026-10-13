@@ -49,6 +49,6 @@ user.queue(
 | `connection` | `string` | false | | The registered cbq connection to use for this call. |
 | `queue` | `string` | false | | The queue to use on that connection. |
 
-For example, `user.queue(notification="StockRebalancingCompleteNotification", connection="messages", queue="stock-updates")` chooses a route for this call. Omit `queue` to use the selected connection's default queue.
+For example, `user.queue(notification="StockRebalancingCompleteNotification", connection="messages", queue="stock-updates")` chooses a route for this call. Omit `queue` to use `queue.defaultQueue`, or the selected connection's default queue when that setting is empty.
 
 **Return**: A `NotificationPublication`. See [Durable Delivery](../guides/durable-delivery.md) for setup and [Event Identities](../guides/event-identities.md) for options. `notify()` continues to return the populated `BaseNotification` instance.

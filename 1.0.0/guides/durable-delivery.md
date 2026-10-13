@@ -4,7 +4,7 @@ Want to save a Notification now and let a worker send it later? Megaphone includ
 
 ### Setting up cbq
 
-Megaphone uses cbq's default connection and that connection's default queue. To use another registered connection, give Megaphone its name. cbq supplies the Provider, queue, and worker settings. You'll also need to tell Megaphone how to load a Notifiable in the worker:
+Megaphone uses cbq's default connection and that connection's default queue. To use another registered connection or queue by default, give Megaphone their names. cbq supplies the Provider and worker settings. You'll also need to tell Megaphone how to load a Notifiable in the worker:
 
 ```js
 moduleSettings.megaphone = {
@@ -14,8 +14,9 @@ moduleSettings.megaphone = {
             "properties": {}
         }
     },
-    "durable": {
-        "queueConnection": "messages",
+    "queue": {
+        "defaultConnection": "messages",
+        "defaultQueue": "notifications",
         "notifiableResolver": "NotifiableResolver"
     }
 };
@@ -23,7 +24,7 @@ moduleSettings.megaphone = {
 
 `NotifiableResolver` is your application component. Its `resolve(type, id)` method returns the current Notifiable, or null if it no longer exists. Megaphone uses it to load the recipient when the job runs.
 
-Register the connection and workers in your application's cbq configuration. Megaphone uses those registrations and leaves the Provider choice to cbq. If you want a different connection from cbq's default, set `durable.queueConnection` to its registered name.
+Register the connection and workers in your application's cbq configuration. Megaphone uses those registrations and leaves the Provider choice to cbq. If you want a different connection from cbq's default, set `queue.defaultConnection` to its registered name. Set `queue.defaultQueue` to choose the queue used for notification jobs.
 
 Apply Megaphone's migrations through your application's migration ledger before queueing. Follow your chosen queue Provider's setup instructions too. For cbq's database Provider, that includes its migrations from `resources/database/migrations`; other Providers have their own requirements.
 
@@ -71,9 +72,9 @@ var publication = megaphone.queue(
 );
 ```
 
-You can pass either argument on its own. A `connection` argument takes precedence over `durable.queueConnection`; omitting both uses cbq's default connection. When you omit `queue`, cbq uses the selected connection's default queue. Configure worker timeouts through cbq.
+You can pass either argument on its own. A `connection` argument takes precedence over `queue.defaultConnection`; omitting both uses cbq's default connection. A `queue` argument takes precedence over `queue.defaultQueue`. When both are omitted, cbq uses the selected connection's default queue. Configure worker timeouts through cbq.
 
-With cbq's standard defaults, omitted `connection` and `queue` arguments both use `default`. If you configure another default connection or a different default queue on that connection, Megaphone follows those cbq settings.
+With no Megaphone route overrides and cbq's standard defaults, omitted `connection` and `queue` arguments both use `default`. If you configure another default connection or a different default queue on that connection, Megaphone follows those cbq settings.
 
 `plan()` accepts these arguments too and saves them with the plan. `queuePlan()` uses the saved choices unless you pass a new `connection` or `queue` at handoff. Replaying an event returns its original work without adding jobs to a different queue.
 
@@ -126,7 +127,7 @@ You can override `getChannelPreferences(notifiable)` to apply your application's
 
 ### Configuring durable delivery
 
-The queue setting in Megaphone is `durable.queueConnection`. Use it to choose a registered cbq connection for notification jobs. Keep default queues, Providers, and worker timeouts in your application's cbq configuration; use `connection` and `queue` arguments when an individual call needs a different route.
+Use `queue.defaultConnection` and `queue.defaultQueue` to choose the default route for notification jobs. Keep Providers and worker timeouts in your application's cbq configuration; use `connection` and `queue` arguments when an individual call needs a different route.
 
 As your application needs more channels or policies, you can add them to the same module settings:
 
@@ -152,8 +153,9 @@ moduleSettings.megaphone = {
         "preferences": {},
         "subscriptions": {}
     },
-    "durable": {
-        "queueConnection": "",
+    "queue": {
+        "defaultConnection": "",
+        "defaultQueue": "",
         "notifiableResolver": "NotifiableResolver",
         "eligibilityPolicy": "NotificationEligibility",
         "snapshotHasher": "NotificationSnapshotHasher@megaphone",
@@ -166,7 +168,7 @@ moduleSettings.megaphone = {
 };
 ```
 
-Leave `queueConnection` empty to use cbq's default connection. The resolver and eligibility mappings are your application components; `NotificationSnapshotHasher` is bundled. Here is what the application callbacks do:
+Leave `defaultConnection` and `defaultQueue` empty to use cbq's default connection and that connection's default queue. The resolver and eligibility mappings are your application components; `NotificationSnapshotHasher` is bundled. Here is what the application callbacks do:
 
 | Setting | Method | What your application supplies |
 | --- | --- | --- |
@@ -249,11 +251,11 @@ component singleton {
 Register the adapter in your module settings:
 
 ```js
-moduleSettings.megaphone.durable.queueAdapter = "NotificationQueueAdapter";
+moduleSettings.megaphone.queue.queueAdapter = "NotificationQueueAdapter";
 ```
 
 You can also supply an adapter instance. Without an override, Megaphone uses `CBQNotificationQueue@megaphone`.
 
 Your worker calls `NotificationDeliveryService.dispatch(deliveryId)` and uses the returned `DeliveryResult`. If you schedule another job after a `retryable`, `deferred`, or `busy` result, reload the delivery and respect its current state and availability date. For a busy delivery, wait until its lease expires. Let Megaphone control the transport allowance, and never automatically resend an accepted or ambiguous delivery. See [Delivery Operations](delivery-operations.md) for recovery and receipt reconciliation.
 
-If you prefer a scheduled polling worker, explicitly set `durable.queueAdapter` to an empty string. Megaphone still saves deliveries; your worker can find them with `getDueDeliveries()` and handle expired leases with `recoverExpired()`.
+If you prefer a scheduled polling worker, explicitly set `queue.queueAdapter` to an empty string. Megaphone still saves deliveries; your worker can find them with `getDueDeliveries()` and handle expired leases with `recoverExpired()`.
