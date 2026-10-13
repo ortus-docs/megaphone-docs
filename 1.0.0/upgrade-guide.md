@@ -10,6 +10,12 @@ The additive `2026_10_12_180000_add_megaphone_notification_mapping.cfc` migratio
 
 If you use custom table names, update the migration configuration to match your storage settings. Try the upgrade against a copy of existing data, including pending deliveries and saved plans, before switching your application to the new APIs.
 
+### Queueing with cbq
+
+Megaphone now includes cbq and uses its bundled `CBQNotificationQueue` adapter by default. Apply cbq's queue migrations before calling `queue()`. If your application already configures cbq, keep that configuration and add a worker for the notification queue. See [Durable Delivery](guides/durable-delivery.md#setting-up-cbq) for setup.
+
+You can keep an existing `durable.queueAdapter` override. If you previously left the adapter unset to poll saved deliveries, explicitly set it to an empty string to retain that behavior.
+
 ### Moving from the unreleased durable APIs
 
 If you adopted an earlier 1.1.0 candidate, update these calls:

@@ -6,17 +6,19 @@ Want to run Megaphone's tests locally? Start with a checkout of the [module repo
 
 The integration suite needs a dedicated MySQL database. Create it first, then use `.env.example` to configure `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`.
 
-Run the migrations before starting the suite:
+The checkout defines migration managers for Megaphone and cbq. Run both before starting the suite:
 
 ```bash
 box install commandbox-migrations
 box migrate install
 box migrate up
+box migrate install manager=cbq
+box migrate up manager=cbq
 box server start
 box testbox run
 ```
 
-Persistence specs roll back their test writes. Use a database set aside for this suite, separate from your application's data.
+The cbq integration specs insert real database jobs and execute their serialized delivery jobs. Test workers stay disabled so the suite controls when a job runs. Persistence specs roll back their test writes. Use a database set aside for this suite, separate from your application's data.
 
 ### Testing Web Push
 

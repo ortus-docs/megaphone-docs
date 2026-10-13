@@ -89,7 +89,10 @@ moduleSettings.megaphone = {
         "subscriptions": {}
     },
     "durable": {
-        "queueAdapter": "NotificationQueue",
+        "queueAdapter": "CBQNotificationQueue@megaphone",
+        "queueConnection": "default",
+        "queueName": "notifications",
+        "queueTimeout": 60,
         "notifiableResolver": "NotifiableResolver",
         "eligibilityPolicy": "NotificationEligibility",
         "snapshotHasher": "NotificationSnapshotHasher@megaphone",
@@ -102,11 +105,11 @@ moduleSettings.megaphone = {
 };
 ```
 
-The mappings in this example are application components, except for the bundled `NotificationSnapshotHasher`. Here is what each callback does:
+Megaphone includes cbq and uses `CBQNotificationQueue@megaphone` by default. You can leave `queueAdapter`, `queueConnection`, `queueName`, and `queueTimeout` out if you want the defaults shown above. The resolver and eligibility mappings are your application components; `NotificationSnapshotHasher` is bundled too. Here is what each callback does:
 
 | Setting | Method | What your application supplies |
 | --- | --- | --- |
-| `queueAdapter` | `enqueue(delivery)` | A job containing `delivery.getId()`. |
+| `queueAdapter` | `enqueue(delivery)` | The bundled cbq adapter, or your own adapter that queues `delivery.getId()`. |
 | `notifiableResolver` | `resolve(type, id)` | The current Notifiable, or null if it no longer exists. |
 | `eligibilityPolicy` | `check(delivery, notifiable, event)` | A `DeliveryPreparation` describing whether this notification can still be sent. |
 | `deliveryPolicy` | `getDispatchOptions(id)` | Optional lease, attempt, and retry settings for a delivery. |
@@ -114,7 +117,30 @@ The mappings in this example are application components, except for the bundled 
 
 `queue()` saves the event, deliveries, and queue jobs in the same datasource transaction. Your queue adapter should only insert the job here. Sending happens in the worker. If inserting a job fails, Megaphone rolls back the publication too.
 
-If you don't configure a queue adapter, you can schedule a worker that uses `NotificationDeliveryService.getDueDeliveries()` and `recoverExpired()`.
+### Setting up cbq
+
+The bundled adapter inserts a cbq job containing only the delivery ID. Its worker calls `NotificationDeliveryService.dispatch()` to send the saved delivery. Each cbq job gets one attempt; Megaphone decides whether a known retryable or deferred outcome should schedule another job. An ambiguous outcome never schedules another send.
+
+If your application doesn't have a cbq configuration, Megaphone supplies a database connection using the delivery store's query options. Once you configure `notifiableResolver`, the bundled configuration defines one worker for the `notifications` queue. Synchronous-only applications don't start that worker or need queue tables.
+
+Before queueing, apply cbq's migrations from its `resources/database/migrations` directory through your application's migration ledger, on the same datasource as the Megaphone deliveries. Megaphone's migrations don't create cbq's tables.
+
+If you already have a cbq configuration, Megaphone keeps it. Add a worker for the configured notification queue to that configuration. For example, inside its `configure()` method:
+
+```js
+newWorkerPool( "notifications" )
+    .forConnection( "default" )
+    .onQueue( "notifications" )
+    .quantity( 1 )
+    .timeout( 60 )
+    .maxAttempts( 1 );
+```
+
+The adapter uses `durable.queueConnection`, `durable.queueName`, and `durable.queueTimeout`. Use cbq's database Provider on the same datasource, so publication and job insertion commit together. The bundled adapter rejects other Providers, including the synchronous Provider, before saving or sending work. Use cbq's `registerWorkers=false` setting on a process that only publishes jobs.
+
+Want a different queue? Set `durable.queueAdapter` to your own mapping or adapter instance with an `enqueue(delivery)` method. To save work for a scheduled polling worker instead, explicitly set it to an empty string and use `getDueDeliveries()` and `recoverExpired()`.
+
+### Application policies
 
 Use the eligibility policy for application rules that may have changed since planning, such as access to the underlying record or whether a feature is enabled. Return a `DeliveryPreparation` with a status of `ready`, `suppressed`, `deferred`, or `permanent`, and an optional reason and retry date. Megaphone also checks current channel preferences before sending.
 
