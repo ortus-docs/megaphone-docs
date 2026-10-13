@@ -290,17 +290,18 @@ You can keep using a Provider that only implements `notify()` for synchronous no
 
 ### Making a custom queue adapter
 
-If your application needs a different job queue or extra work when inserting a job, you can supply your own adapter. It needs an `enqueue(delivery, connection, queue)` method that receives a `NotificationDelivery` object and optional route arguments. Megaphone forwards `connection` and `queue` only when a caller supplies them.
+If your application needs a different job queue or extra work when inserting a job, you can supply your own adapter. Implement `INotificationQueue` with an `enqueue(delivery, connection, queue)` method that receives a `NotificationDelivery` object and optional route arguments. Megaphone forwards `connection` and `queue` only when a caller supplies them.
 
 Here is an example using an application queue service:
 
 ```js
 // models/NotificationQueueAdapter.cfc
-component singleton {
+component singleton implements="megaphone.models.Interfaces.INotificationQueue" {
 
     property name="jobQueue" inject="JobQueue";
 
-    public void function enqueue( required any delivery, string connection, string queue ) {
+    /** Queues a saved delivery reference for the application worker. */
+    public void function enqueue( required megaphone.models.NotificationDelivery delivery, string connection, string queue ) {
         var jobArguments = {
             "job": "DeliverNotification",
             "properties": { "deliveryId": arguments.delivery.getId() },
