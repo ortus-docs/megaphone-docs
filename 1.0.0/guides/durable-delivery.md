@@ -177,9 +177,69 @@ Leave `defaultConnection` and `defaultQueue` empty to use cbq's default connecti
 | `deliveryPolicy` | `getDispatchOptions(id)` | Optional lease, attempt, and retry settings for a delivery. |
 | `snapshotHasher` | `digest(value, context)` | A stable hash when your application needs its own hashing rules. |
 
+### Loading a Notifiable
+
+Megaphone saves the Notifiable's type and ID with the delivery. Your resolver uses them to load the current application object when the worker runs. For an application whose Users return `"User"` from `getNotifiableType()`, the resolver could look like this:
+
+```js
+// models/NotifiableResolver.cfc
+component singleton {
+
+    property name="users" inject="UserService";
+
+    public any function resolve( required string type, required string id ) {
+        if ( arguments.type != "User" ) {
+            return;
+        }
+        return variables.users.find( arguments.id );
+    }
+
+}
+```
+
+`UserService` belongs to your application. In this example, its `find(id)` method returns a User or null when the User no longer exists. Use your own lookup method, and add a branch for each Notifiable type your application supports. Return null for a missing recipient; Megaphone suppresses that delivery without sending it.
+
+The returned object must implement `getNotifiableType()` and `getNotifiableId()`, along with any routing methods your Notification uses. Megaphone checks that its type and ID match the saved delivery.
+
 ### Application policies
 
 Use the eligibility policy for application rules that may have changed since planning, such as access to the underlying record or whether a feature is enabled. Return a `DeliveryPreparation` with a status of `ready`, `suppressed`, `deferred`, or `permanent`, and an optional reason and retry date. Megaphone also checks current channel preferences before sending.
+
+For example, you might skip notifications for inactive accounts and pause delivery while a feature is disabled:
+
+```js
+// models/NotificationEligibility.cfc
+component singleton {
+
+    property name="featureFlags" inject="FeatureFlags";
+
+    public megaphone.models.DeliveryPreparation function check(
+        required any delivery,
+        required any notifiable,
+        required any event
+    ) {
+        if ( !arguments.notifiable.getIsActive() ) {
+            return new megaphone.models.DeliveryPreparation( {
+                "status": "suppressed",
+                "reason": "account-inactive"
+            } );
+        }
+        if ( !variables.featureFlags.isEnabled( "notifications" ) ) {
+            return new megaphone.models.DeliveryPreparation( {
+                "status": "deferred",
+                "reason": "notifications-paused",
+                "retryDate": dateAdd( "n", 5, now() )
+            } );
+        }
+        return new megaphone.models.DeliveryPreparation( { "status": "ready" } );
+    }
+
+}
+```
+
+`FeatureFlags.isEnabled(name)` and the User's `getIsActive()` method are application methods in this example. Replace them with your own checks. You can also use `event.getPayload()` and `delivery.getRoutingData()` to check access to the record behind the Notification.
+
+Register these components through `queue.notifiableResolver = "NotifiableResolver"` and `queue.eligibilityPolicy = "NotificationEligibility"`, as shown above. The eligibility policy is optional. Megaphone checks it before preparing content and again before starting transport, so keep it safe to call more than once. Return `deferred` for a temporary pause; that does not consume a transport attempt.
 
 The storage settings accept `table`, `queryOptions`, and `datasource`. Delivery storage also accepts `attemptsTable`, `eventsTable`, and `recoveriesTable`; subscription storage accepts `exclusionsTable`. If you customize table names, update your migrations and related table settings to match. Public APIs use `notifiableType`, `notifiableId`, and `channelName`; existing database column names stay the same.
 
@@ -213,7 +273,11 @@ Providers can support the optional `IDurableNotificationProvider` protocol with 
 
 `DeliveryResult` supports `accepted`, `retryable`, `permanent`, and `ambiguous`, with optional reason, Provider reference, and retry date. Use `prepared.getData()` for temporary mail or request objects. The preparation memento contains status metadata, so those transport objects aren't serialized.
 
-The Database and Web Push Providers support durable delivery. The Email Provider needs a configured durable adapter that supplies explicit evidence of acceptance. A successful method return alone isn't enough to establish acceptance.
+The Database and Web Push Providers support durable delivery. For email, configure the Email Provider's `durableAdapter` with a component that returns a `DeliveryResult` based on the mail transport's response.
+
+For example, a provider message ID returned after accepting a message can be saved as `providerReference`. A timeout after submission is different: the provider may have accepted the message even though the application didn't receive its response. Return `ambiguous` in that case so Megaphone won't send a duplicate automatically.
+
+cbmailservices exposes send results through its [Mail callbacks](https://coldbox-mailservices.ortusbooks.com/essentials/sending-mail). The meaning of success depends on the mail protocol. It can mean that a provider accepted the message, that the engine queued it locally, or that a test protocol captured it. A method returning successfully by itself doesn't distinguish those outcomes. The current Megaphone adapter hook lets applications supply transport-specific handling or use an existing receipt ledger.
 
 You can keep using a Provider that only implements `notify()` for synchronous notifications. If you try to plan a durable notification for that channel, Megaphone throws `Megaphone.Configuration.UnsupportedDurableProvider`.
 
