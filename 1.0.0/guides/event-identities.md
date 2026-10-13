@@ -62,7 +62,9 @@ The memento has `schemaVersion=1`, an `event`, a `deliveries` array, and an opti
 For example, a user who registers another device after the plan was saved won't receive the old notification on that device. A channel that was suppressed in the plan stays suppressed.
 
 {% hint style="info" %}
-A trusted producer that already saved and validated its original admission can call `queuePlan(plan, alreadyAdmitted=true)`. This bypasses the admission cutoff when handing off that saved work. It keeps the plan's captured recipients and channels.
+`plan()` also accepts optional `connection` and `queue` arguments. Its version 1 memento stores explicit choices in `queueOptions`; existing saved plans without that field use the current defaults. You can override either choice when calling `queuePlan()` without changing the captured audience or hashes.
+
+A trusted producer that already saved and validated its original admission can call `queuePlan(plan=plan, alreadyAdmitted=true)`. This bypasses the admission cutoff when handing off that saved work. It keeps the plan's captured recipients and channels.
 {% endhint %}
 
 ### Keeping hashes stable

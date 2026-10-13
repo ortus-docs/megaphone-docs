@@ -38,6 +38,8 @@ Captures the recipients, channels, preferences, devices, and properties for a qu
 | `notification` | `string` or `BaseNotification` | true | | The Notification instance or its WireBox mapping. |
 | `properties` | `struct` | false | `{}` | Properties to populate on the Notification. |
 | `options` | `struct` | false | `{}` | Event identity, occurrence time, availability date, and optional admission cutoff. |
+| `connection` | `string` | false | | A registered cbq connection. Overrides `durable.queueConnection`; otherwise cbq uses its default connection. |
+| `queue` | `string` | false | | A queue on the selected connection. Omit it to use that connection's default queue. |
 
 **Return**: A `NotificationPlan`. See [Event Identities](../guides/event-identities.md) for the available options and saving its memento.
 
@@ -61,6 +63,10 @@ Queues a previously captured `NotificationPlan`. Use this when your application 
 | --- | --- | --- | --- | --- |
 | `plan` | `NotificationPlan` | true | | The original plan, including its captured recipients and channel choices. |
 | `alreadyAdmitted` | `boolean` | false | `false` | Bypasses the admission cutoff for a trusted producer that already saved and validated admission. |
+| `connection` | `string` | false | | Overrides the plan's saved cbq connection for this handoff. |
+| `queue` | `string` | false | | Overrides the plan's saved queue for this handoff. |
+
+The plan retains explicit `connection` and `queue` arguments in its optional `queueOptions` memento. cbq supplies omitted route and worker settings.
 
 Queueing a saved plan keeps its original audience, payload, times, and hashes. It doesn't enable a channel that was suppressed in the plan.
 

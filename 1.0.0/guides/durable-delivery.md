@@ -4,7 +4,7 @@ Want to save a Notification now and let a worker send it later? Megaphone includ
 
 ### Setting up cbq
 
-Megaphone sends jobs to the `notifications` queue on cbq's registered default connection. cbq uses the Provider configured for that connection. Choose your queue name and tell Megaphone how to load a Notifiable in the worker:
+Megaphone uses cbq's default connection and that connection's default queue. To use another registered connection, give Megaphone its name. cbq supplies the Provider, queue, and worker settings. You'll also need to tell Megaphone how to load a Notifiable in the worker:
 
 ```js
 moduleSettings.megaphone = {
@@ -15,7 +15,7 @@ moduleSettings.megaphone = {
         }
     },
     "durable": {
-        "queueName": "notifications",
+        "queueConnection": "messages",
         "notifiableResolver": "NotifiableResolver"
     }
 };
@@ -27,11 +27,11 @@ Register the connection and workers in your application's cbq configuration. Meg
 
 Apply Megaphone's migrations through your application's migration ledger before queueing. Follow your chosen queue Provider's setup instructions too. For cbq's database Provider, that includes its migrations from `resources/database/migrations`; other Providers have their own requirements.
 
-For a cbq Provider that uses worker pools, add a worker for the notification queue. This example uses a connection named `default`; use the name of your registered connection:
+For a cbq Provider that uses worker pools, add a worker for the notification queue. This example uses a connection named `messages` with a default queue named `notifications`; use your registered connection and queue names:
 
 ```js
 newWorkerPool( "notifications" )
-    .forConnection( "default" )
+    .forConnection( "messages" )
     .onQueue( "notifications" )
     .quantity( 1 )
     .timeout( 60 )
@@ -58,6 +58,22 @@ var publication = megaphone.queue(
 ```
 
 You can pass a Notification instance or its WireBox name, along with a struct of properties to populate. Megaphone calls `via()` for each Notifiable, checks their channel preferences, and saves the resulting deliveries. The bundled cbq job sends them through the registered Providers.
+
+Want to choose a connection or queue for one Notification? Pass `connection` and `queue`, just as you would with cbq:
+
+```js
+var publication = megaphone.queue(
+    notifiables = user,
+    notification = "StockRebalancingCompleteNotification",
+    properties = { "stockSymbol": "APPL", "completionTimestamp": now() },
+    connection = "messages",
+    queue = "stock-updates"
+);
+```
+
+You can pass either argument on its own. A `connection` argument takes precedence over `durable.queueConnection`; omitting both uses cbq's default connection. When you omit `queue`, cbq uses the selected connection's default queue. Configure worker timeouts through cbq.
+
+`plan()` accepts these arguments too and saves them with the plan. `queuePlan()` uses the saved choices unless you pass a new `connection` or `queue` at handoff. Replaying an event returns its original work without adding jobs to a different queue.
 
 Megaphone saves the event and deliveries in a transaction and asks cbq to enqueue each delivery ID. An enqueue failure rolls back those Megaphone records.
 
@@ -136,8 +152,6 @@ moduleSettings.megaphone = {
     },
     "durable": {
         "queueConnection": "",
-        "queueName": "notifications",
-        "queueTimeout": 60,
         "notifiableResolver": "NotifiableResolver",
         "eligibilityPolicy": "NotificationEligibility",
         "snapshotHasher": "NotificationSnapshotHasher@megaphone",
@@ -201,7 +215,7 @@ You can keep using a Provider that only implements `notify()` for synchronous no
 
 ### Making a custom queue adapter
 
-If your application needs a different job queue or extra work when inserting a job, you can supply your own adapter. It needs an `enqueue(delivery)` method that receives a `NotificationDelivery` object.
+If your application needs a different job queue or extra work when inserting a job, you can supply your own adapter. It needs an `enqueue(delivery, connection, queue)` method that receives a `NotificationDelivery` object and optional route arguments. Megaphone forwards `connection` and `queue` only when a caller supplies them.
 
 Here is an example using an application queue service:
 
@@ -211,12 +225,18 @@ component singleton {
 
     property name="jobQueue" inject="JobQueue";
 
-    public void function enqueue( required any delivery ) {
-        variables.jobQueue.enqueue(
-            job = "DeliverNotification",
-            properties = { "deliveryId": arguments.delivery.getId() },
-            availableDate = arguments.delivery.getAvailableDate()
-        );
+    public void function enqueue( required any delivery, string connection, string queue ) {
+        var jobArguments = {
+            "job": "DeliverNotification",
+            "properties": { "deliveryId": arguments.delivery.getId() },
+            "availableDate": arguments.delivery.getAvailableDate()
+        };
+        for ( var name in [ "connection", "queue" ] ) {
+            if ( !isNull( arguments[ name ] ) ) {
+                jobArguments[ name ] = arguments[ name ];
+            }
+        }
+        variables.jobQueue.enqueue( argumentCollection = jobArguments );
     }
 
 }
