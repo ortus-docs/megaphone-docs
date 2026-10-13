@@ -6,7 +6,7 @@ A Web Push subscription belongs to a particular browser on a particular device. 
 
 The `subscription` comes from the browser's [Push API](https://developer.mozilla.org/en-US/docs/Web/API/PushManager/subscribe). Register a service worker, then call `registration.pushManager.subscribe()` when the user chooses to enable push. This needs HTTPS, or localhost during development, and notification permission.
 
-You'll also need an `applicationServerKey`: the browser-compatible VAPID public key belonging to the key pair your [Web Push Provider](web-push.md) uses. Keep the private key on the server. The bundled runtime's `enrollmentConfiguration()` method returns this public key in the right format:
+You'll also need an `applicationServerKey`: the browser-compatible VAPID public key belonging to the key pair your [Web Push Provider](../providers/webpushprovider.md) uses. Keep the private key on the server. The bundled runtime's `enrollmentConfiguration()` method returns this public key in the right format:
 
 ```js
 // Server-side, when using the bundled runtime's channel properties.
@@ -65,7 +65,7 @@ The URL and CSRF header are examples for your application to implement. Use your
 
 ### Receiving push messages
 
-Create `/sw.js` in your application's web root. For the `title` and `body` payload shown in [Java Web Push](web-push.md#towebpush), a minimal service worker looks like this:
+Create `/sw.js` in your application's web root. For the `title` and `body` payload shown in [WebPushProvider](../providers/webpushprovider.md#towebpush), a minimal service worker looks like this:
 
 ```js
 self.addEventListener( "push", ( event ) => {
@@ -114,7 +114,7 @@ Registering a device doesn't change channel preferences or publish a notificatio
 
 ### Configuring subscription storage
 
-The [Web Push Provider](web-push.md#configuration) uses Megaphone's default `WebPushRuntime` when you omit `runtime`. Configure it with `enabled`, `origin`, `publicKey`, `privateKey`, `subject`, `allowedHosts`, `activeStorageKeyId`, and `storageKeys` in its channel properties.
+The [Web Push Provider](../providers/webpushprovider.md#configuration) uses Megaphone's default `WebPushRuntime` when you omit `runtime`. Configure it with `enabled`, `origin`, `publicKey`, `privateKey`, `subject`, `allowedHosts`, `activeStorageKeyId`, and `storageKeys` in its channel properties.
 
 The bundled runtime uses base64 PKCS8/X509 VAPID keys and a storage keyring of base64 AES-256 keys. If your application already encrypts subscriptions, you can supply a `runtime` mapping with `enabled()`, `context(notifiable)`, `cipher()`, and `transport()`. Keep the existing recipient and origin contexts so saved subscriptions can still be decrypted.
 

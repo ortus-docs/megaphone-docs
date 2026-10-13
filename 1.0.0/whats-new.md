@@ -12,7 +12,7 @@ There are also new ways to manage notifications in your application:
 
 - [Notification Inboxes](guides/notification-inboxes.md) adds "load more" pagination, archive state, and read snapshots.
 - [Notification Preferences](guides/notification-preferences.md) stores channel choices for scopes defined by your application.
-- [Java Web Push](guides/web-push.md) sends through registered devices, with [Push Registrations](guides/push-registrations.md) for device management.
+- [WebPushProvider](providers/webpushprovider.md) sends through registered devices, with [Push Registrations](guides/push-registrations.md) for device management.
 - [Delivery Operations](guides/delivery-operations.md) lets you inspect history, reconcile receipts, and request recovery.
 
 Your existing synchronous notifications and numbered inbox cursors still work. Start with [Durable Delivery](guides/durable-delivery.md), or read the [Upgrade Guide](upgrade-guide.md) if you are moving an existing application to 1.1.0.

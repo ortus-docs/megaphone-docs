@@ -1,4 +1,4 @@
-# Java Web Push
+# WebPushProvider
 
 The `WebPushProvider` sends a Notification to a Notifiable's registered browsers. Like the other Providers, you register it as a channel and return that channel name from `via()`.
 
@@ -38,7 +38,7 @@ Leave out `runtime` to use Megaphone's default. The environment variable names a
 
 `publicKey` is a base64 X509 VAPID public key, and `privateKey` is its matching base64 PKCS8 private key. `storageKeys` contains base64 AES-256 keys for encrypting subscriptions, with `activeStorageKeyId` selecting the key used for new writes. `allowedHosts` lists the trusted push-service hosts your application sends to. Keep the configured keys and `origin` stable across restarts so existing subscriptions remain usable.
 
-The default encryption context combines the Notifiable's type, ID, and configured origin. See [Push Registrations](push-registrations.md) for browser enrollment, encrypted storage, and key rotation. Push infrastructure is resolved when needed; setting `enabled` to `false` disables push without preventing unrelated channels from starting.
+The default encryption context combines the Notifiable's type, ID, and configured origin. See [Push Registrations](../guides/push-registrations.md) for browser enrollment, encrypted storage, and key rotation. Push infrastructure is resolved when needed; setting `enabled` to `false` disables push without preventing unrelated channels from starting.
 
 ### toWebPush
 
@@ -67,7 +67,7 @@ For durable notifications, each selected device gets its own delivery. If no dev
 
 The Provider handles encryption, request preparation, and HTTP outcomes behind its normal delivery methods. Your Notification only needs to supply the content.
 
-For browser enrollment, renewal, and logout behavior, see [Push Registrations](push-registrations.md). The module tests use fixture HTTP clients; check your actual Provider configuration and devices before deploying your application's push integration.
+For browser enrollment, renewal, and logout behavior, see [Push Registrations](../guides/push-registrations.md). The module tests use fixture HTTP clients; check your actual Provider configuration and devices before deploying your application's push integration.
 
 ### Providing a custom runtime
 

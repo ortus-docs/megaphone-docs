@@ -26,6 +26,7 @@
 * [EmailProvider](providers/emailprovider.md)
 * [SlackProvider](providers/slackprovider/README.md)
   * [Slack BlockKit](providers/slackprovider/slack-blockkit.md)
+* [WebPushProvider](providers/webpushprovider.md)
 * [Creating Custom Providers](providers/creating-custom-providers.md)
 
 ## Notification Storage and Delivery
@@ -33,7 +34,6 @@
 * [Notification Inboxes](guides/notification-inboxes.md)
 * [Notification Preferences](guides/notification-preferences.md)
 * [Push Registrations](guides/push-registrations.md)
-* [Java Web Push](guides/web-push.md)
 * [Event Identities](guides/event-identities.md)
 * [Durable Delivery](guides/durable-delivery.md)
 * [Delivery Operations](guides/delivery-operations.md)
