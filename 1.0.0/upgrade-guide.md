@@ -20,8 +20,6 @@ Megaphone uses its bundled `CBQNotificationQueue` adapter by default, but cbq is
 
 You can keep an existing `queue.queueAdapter` override. If you previously left the adapter unset to poll saved deliveries, explicitly set it to an empty string to retain that behavior.
 
-The queue settings now live under `moduleSettings.megaphone.queue`. When updating an earlier candidate, rename the `durable` group to `queue` and `queueConnection` to `defaultConnection`.
-
 ### Moving from the unreleased durable APIs
 
 If you adopted an earlier 1.1.0 candidate, update these calls:
