@@ -221,6 +221,7 @@ component singleton {
 
     property name="featureFlags" inject="FeatureFlags";
 
+    /** Checks the account and feature policy before starting delivery. */
     public megaphone.models.DeliveryPreparation function check(
         required any delivery,
         required any notifiable,
