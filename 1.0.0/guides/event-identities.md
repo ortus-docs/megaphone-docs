@@ -53,7 +53,7 @@ Add a method provider to the service that restores your saved plans:
 
 ```js
 /** Supplies a fresh plan through WireBox. */
-private megaphone.models.NotificationPlan function newNotificationPlan()
+private megaphone.models.Delivery.NotificationPlan function newNotificationPlan()
     provider="NotificationPlan@megaphone" {
 }
 ```

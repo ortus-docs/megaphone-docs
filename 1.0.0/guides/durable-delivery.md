@@ -222,7 +222,7 @@ component singleton {
     property name="featureFlags" inject="FeatureFlags";
 
     /** Checks the account and feature policy before starting delivery. */
-    public megaphone.models.DeliveryPreparation function check(
+    public megaphone.models.Delivery.DeliveryPreparation function check(
         required any delivery,
         required any notifiable,
         required any event
@@ -237,7 +237,7 @@ component singleton {
     }
 
     /** Supplies a fresh preparation decision through WireBox. */
-    private megaphone.models.DeliveryPreparation function newDeliveryPreparation()
+    private megaphone.models.Delivery.DeliveryPreparation function newDeliveryPreparation()
         provider="DeliveryPreparation@megaphone" {
     }
 
@@ -301,7 +301,7 @@ component singleton implements="megaphone.models.Interfaces.INotificationQueue" 
     property name="jobQueue" inject="JobQueue";
 
     /** Queues a saved delivery reference for the application worker. */
-    public void function enqueue( required megaphone.models.NotificationDelivery delivery, string connection, string queue ) {
+    public void function enqueue( required megaphone.models.Delivery.NotificationDelivery delivery, string connection, string queue ) {
         var jobArguments = {
             "job": "DeliverNotification",
             "properties": { "deliveryId": arguments.delivery.getId() },
