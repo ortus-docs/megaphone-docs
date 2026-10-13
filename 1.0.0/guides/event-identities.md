@@ -52,12 +52,12 @@ var savedPlan = serializeJSON( plan.getMemento() );
 Later, restore the plan and queue it:
 
 ```js
-var plan = new megaphone.models.NotificationPlan( {}, [] )
+var plan = new megaphone.models.NotificationPlan()
     .populateFromMemento( deserializeJSON( savedPlan ) );
 var publication = megaphone.queuePlan( plan );
 ```
 
-The memento has `schemaVersion=1`, an `event`, a `deliveries` array, and an optional `admitAfter`. It keeps the original Notifiable identities, channel choices, device IDs, payload, occurrence time, availability dates, and hashes. Restoring it doesn't ask `via()` or preferences to choose a new audience.
+The constructor defaults `event` to `{}` and `deliveries` to `[]`; `populateFromMemento()` replaces them with the saved values. The memento has `schemaVersion=1`, an `event`, a `deliveries` array, and an optional `admitAfter`. It keeps the original Notifiable identities, channel choices, device IDs, payload, occurrence time, availability dates, and hashes. Restoring it doesn't ask `via()` or preferences to choose a new audience.
 
 For example, a user who registers another device after the plan was saved won't receive the old notification on that device. A channel that was suppressed in the plan stays suppressed.
 
