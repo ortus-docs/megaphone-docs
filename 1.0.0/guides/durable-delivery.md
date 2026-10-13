@@ -1,8 +1,16 @@
 # Durable Delivery
 
-Want to save a Notification now and let a worker send it later? Megaphone includes cbq and a delivery job for that. You use the same Notifications, Notifiables, and channels as `notify()`, then call `queue()` to hand the work to cbq.
+Want to save a Notification now and let a worker send it later? Megaphone includes a cbq adapter and a delivery job for that. Install cbq in your application when you want to use them. You use the same Notifications, Notifiables, and channels as `notify()`, then call `queue()` to hand the work to cbq.
 
 ### Setting up cbq
+
+cbq is an optional application dependency. Megaphone does not install it for you:
+
+```bash
+box install cbq
+```
+
+If you try to enqueue through Megaphone's cbq adapter without an available, active cbq module, it throws `Megaphone.Queue.MissingCBQ`. You can use synchronous notifications, a custom queue adapter, or a polling worker without installing cbq.
 
 Megaphone uses cbq's default connection and that connection's default queue. To use another registered connection or queue by default, give Megaphone their names. cbq supplies the Provider and worker settings. You'll also need to tell Megaphone how to load a Notifiable in the worker:
 

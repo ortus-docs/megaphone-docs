@@ -35,3 +35,5 @@ The installer downloads the pinned JAR and verifies its checksum. Push preparati
 The module's engine matrix covers Lucee 5/6 and Adobe ColdFusion 2021/2023 with ColdBox 6/7. See [module PR #2](https://github.com/coldbox-modules/megaphone/pull/2) for the current check results.
 
 Your application's tests should also exercise its authorization constraints, preference scopes, queue transactions, worker handoff, and Provider callbacks. For Web Push, check browser enrollment and delivery on your actual devices as part of verifying the integration.
+
+The development checkout installs cbq for the queue integration suite. To exercise the optional-dependency checks, move `modules/cbq` out of the module discovery path, run the `tests.specs.integration.OptionalCBQSpec` bundle, then restore it. That bundle verifies startup, synchronous notifications, custom adapters, polling, and the `Megaphone.Queue.MissingCBQ` exception with cbq absent.

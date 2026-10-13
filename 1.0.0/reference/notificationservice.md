@@ -53,6 +53,8 @@ With cbq's standard defaults, omitted `connection` and `queue` arguments both us
 
 Plans and saves a Notification for delivery by a worker. It accepts the same arguments as `plan()`.
 
+Install and configure cbq in your application to use the bundled adapter. If cbq is unavailable when it tries to enqueue, Megaphone throws `Megaphone.Queue.MissingCBQ`.
+
 The bundled cbq adapter dispatches a delivery job to the configured queue, using the Provider on its registered connection. Megaphone saves the event and deliveries transactionally; an enqueue failure rolls back those records. Queue-side rollback and execution timing follow the chosen Provider. A database queue on the same datasource can join the transaction. Repeating an event identity with the same payload hash returns its original work.
 
 **Return**: A `NotificationPublication`, with `getEvent()` and `getDeliveries()` accessors. See [Durable Delivery](../guides/durable-delivery.md) for cbq setup and examples. Its final section covers [custom queue adapters](../guides/durable-delivery.md#making-a-custom-queue-adapter).
