@@ -124,7 +124,7 @@ You can override `getChannelPreferences(notifiable)` to apply your application's
 
 ### Configuring durable delivery
 
-You can choose a cbq connection, queue name, and timeout in the `durable` settings. Match the connection and queue to your cbq worker configuration. By default, Megaphone uses cbq's default connection, the `notifications` queue, and a 60-second timeout.
+The queue setting in Megaphone is `durable.queueConnection`. Use it to choose a registered cbq connection for notification jobs. Keep default queues, Providers, and worker timeouts in your application's cbq configuration; use `connection` and `queue` arguments when an individual call needs a different route.
 
 As your application needs more channels or policies, you can add them to the same module settings:
 
@@ -164,7 +164,7 @@ moduleSettings.megaphone = {
 };
 ```
 
-You can omit the queue settings to use their defaults. The resolver and eligibility mappings are your application components; `NotificationSnapshotHasher` is bundled. Here is what the application callbacks do:
+Leave `queueConnection` empty to use cbq's default connection. The resolver and eligibility mappings are your application components; `NotificationSnapshotHasher` is bundled. Here is what the application callbacks do:
 
 | Setting | Method | What your application supplies |
 | --- | --- | --- |
