@@ -219,17 +219,10 @@ component singleton {
         required any event
     ) {
         if ( !arguments.notifiable.getIsActive() ) {
-            return new megaphone.models.DeliveryPreparation( {
-                "status": "suppressed",
-                "reason": "account-inactive"
-            } );
+            return new megaphone.models.DeliveryPreparation( { "status": "suppressed", "reason": "account-inactive" } );
         }
         if ( !variables.featureFlags.isEnabled( "notifications" ) ) {
-            return new megaphone.models.DeliveryPreparation( {
-                "status": "deferred",
-                "reason": "notifications-paused",
-                "retryDate": dateAdd( "n", 5, now() )
-            } );
+            return new megaphone.models.DeliveryPreparation( { "status": "deferred", "reason": "notifications-paused", "retryDate": dateAdd( "n", 5, now() ) } );
         }
         return new megaphone.models.DeliveryPreparation( { "status": "ready" } );
     }
