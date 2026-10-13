@@ -22,13 +22,7 @@ The cbq integration specs insert real database jobs and execute their serialized
 
 ### Testing Web Push
 
-For the optional SDK tests, use Java 11+ and run the SDK installer before the suite:
-
-```bash
-box task run taskFile=tasks/InstallWebPushSDK.cfc
-```
-
-The installer downloads the pinned JAR and verifies its checksum. Push preparation tests use transport fixtures, so they don't send notifications to real devices.
+For the SDK tests, use Java 11+. The checkout's `box install` command installs the pinned JAR dependency through CommandBox's JAR endpoint; no separate SDK setup is needed. Push preparation tests load the real SDK and use fixture HTTP clients, so they don't send notifications to real devices.
 
 ### Testing your application
 
