@@ -73,6 +73,8 @@ var publication = megaphone.queue(
 
 You can pass either argument on its own. A `connection` argument takes precedence over `durable.queueConnection`; omitting both uses cbq's default connection. When you omit `queue`, cbq uses the selected connection's default queue. Configure worker timeouts through cbq.
 
+With cbq's standard defaults, omitted `connection` and `queue` arguments both use `default`. If you configure another default connection or a different default queue on that connection, Megaphone follows those cbq settings.
+
 `plan()` accepts these arguments too and saves them with the plan. `queuePlan()` uses the saved choices unless you pass a new `connection` or `queue` at handoff. Replaying an event returns its original work without adding jobs to a different queue.
 
 Megaphone saves the event and deliveries in a transaction and asks cbq to enqueue each delivery ID. An enqueue failure rolls back those Megaphone records.

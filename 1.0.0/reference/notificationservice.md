@@ -41,6 +41,8 @@ Captures the recipients, channels, preferences, devices, and properties for a qu
 | `connection` | `string` | false | | A registered cbq connection. Overrides `durable.queueConnection`; otherwise cbq uses its default connection. |
 | `queue` | `string` | false | | A queue on the selected connection. Omit it to use that connection's default queue. |
 
+With cbq's standard defaults, omitted `connection` and `queue` arguments both use `default`. A configured `durable.queueConnection` or custom cbq default takes precedence.
+
 **Return**: A `NotificationPlan`. See [Event Identities](../guides/event-identities.md) for the available options and saving its memento.
 
 {% hint style="danger" %}
