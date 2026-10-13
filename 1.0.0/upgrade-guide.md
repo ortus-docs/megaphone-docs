@@ -6,7 +6,11 @@ If your application uses synchronous `notify()` calls, you can keep those calls 
 
 Run the module migrations through cfmigrations and its migration ledger, using the same datasource as your domain writes. A database queue on that datasource can share the publication transaction. Keep previously applied migrations unchanged.
 
-The additive `2026_10_12_180000_add_megaphone_notification_mapping.cfc` migration runs after the existing migrations. It adds a nullable mapping so workers can reconstruct Notifications for stored events. Backfill the mapping for known notification types in your application. Keep their existing payloads, hashes, delivery IDs, and queue references.
+The additive `2026_10_12_180000_add_megaphone_notification_mapping.cfc` migration runs after the existing migrations. It adds a nullable `notificationMapping` column that tells the worker which Notification class to load.
+
+Backfilling is required for older durable events whose deliveries you want the new dispatcher to send or recover. It is optional for completed, history-only events, and existing inbox entries can still be read without it. Fresh installations have nothing to backfill; new plans and newly queued events capture their mapping automatically.
+
+For example, an event type such as `offer.published` is a business label. Its mapping might be `ActivityNotification`, the WireBox name of the class that can format that event for its saved channels. Without a mapping, eligible old work fails during preparation and cannot send. Use a class that understands the original payload, and update only the mapping: keep existing payloads, hashes, delivery IDs, and queue references. Backfilling does not recreate deliveries or resend completed notifications.
 
 If you use custom table names, update the migration configuration to match your storage settings. Try the upgrade against a copy of existing data, including pending deliveries and saved plans, before switching your application to the new APIs.
 
