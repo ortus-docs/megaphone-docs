@@ -10,18 +10,35 @@ The SDK uses the JDK's HTTP client and needs no additional Java libraries or fat
 
 ### Configuration
 
-Register the Provider through your Megaphone channel settings:
+Megaphone includes a default `WebPushRuntime`. It supplies the subscription cipher, recipient context, browser enrollment public key, and Java transport. You don't need to create an `ApplicationPushRuntime` component.
+
+Register the Provider through your Megaphone channel settings and supply your application's keys and push configuration:
 
 ```js
-"push": {
-    "provider": "WebPushProvider@megaphone",
-    "properties": {
-        "runtime": "ApplicationPushRuntime"
+moduleSettings.megaphone.channels = {
+    "push": {
+        "provider": "WebPushProvider@megaphone",
+        "properties": {
+            "enabled": true,
+            "origin": "https://example.com",
+            "subject": "mailto:push@example.com",
+            "publicKey": getSystemSetting( "PUSH_VAPID_PUBLIC_KEY" ),
+            "privateKey": getSystemSetting( "PUSH_VAPID_PRIVATE_KEY" ),
+            "allowedHosts": listToArray( getSystemSetting( "PUSH_ALLOWED_HOSTS" ) ),
+            "activeStorageKeyId": "v1",
+            "storageKeys": {
+                "v1": getSystemSetting( "PUSH_STORAGE_KEY" )
+            }
+        }
     }
-}
+};
 ```
 
-Here, `ApplicationPushRuntime` is your application component supplying the push configuration, cipher, and transport. You can also configure the bundled runtime directly through channel properties. See [Push Registrations](push-registrations.md#configuring-subscription-storage) for those settings and encrypted subscription storage.
+Leave out `runtime` to use Megaphone's default. The environment variable names above are examples; use your application's configuration conventions.
+
+`publicKey` is a base64 X509 VAPID public key, and `privateKey` is its matching base64 PKCS8 private key. `storageKeys` contains base64 AES-256 keys for encrypting subscriptions, with `activeStorageKeyId` selecting the key used for new writes. `allowedHosts` lists the trusted push-service hosts your application sends to. Keep the configured keys and `origin` stable across restarts so existing subscriptions remain usable.
+
+The default encryption context combines the Notifiable's type, ID, and configured origin. See [Push Registrations](push-registrations.md) for browser enrollment, encrypted storage, and key rotation. Push infrastructure is resolved when needed; setting `enabled` to `false` disables push without preventing unrelated channels from starting.
 
 ### toWebPush
 
@@ -51,3 +68,18 @@ For durable notifications, each selected device gets its own delivery. If no dev
 The Provider handles encryption, request preparation, and HTTP outcomes behind its normal delivery methods. Your Notification only needs to supply the content.
 
 For browser enrollment, renewal, and logout behavior, see [Push Registrations](push-registrations.md). The module tests use fixture HTTP clients; check your actual Provider configuration and devices before deploying your application's push integration.
+
+### Providing a custom runtime
+
+If your application needs a different encryption context, cipher, or transport, you can override the default with a WireBox mapping:
+
+```js
+"push": {
+    "provider": "WebPushProvider@megaphone",
+    "properties": {
+        "runtime": "ApplicationPushRuntime"
+    }
+}
+```
+
+`ApplicationPushRuntime` is your component in this example. It implements `enabled()`, `context(notifiable)`, `cipher()`, and `transport()`. Use this override when integrating existing push infrastructure or preserving the encryption context of subscriptions already stored by your application. Otherwise, use the default runtime and configure its channel properties.

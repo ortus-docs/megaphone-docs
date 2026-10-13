@@ -114,9 +114,11 @@ Registering a device doesn't change channel preferences or publish a notificatio
 
 ### Configuring subscription storage
 
-The [Web Push Provider](web-push.md) accepts `enabled`, `origin`, `publicKey`, `privateKey`, `subject`, `allowedHosts`, `activeStorageKeyId`, and `storageKeys` in its channel properties.
+The [Web Push Provider](web-push.md#configuration) uses Megaphone's default `WebPushRuntime` when you omit `runtime`. Configure it with `enabled`, `origin`, `publicKey`, `privateKey`, `subject`, `allowedHosts`, `activeStorageKeyId`, and `storageKeys` in its channel properties.
 
 The bundled runtime uses base64 PKCS8/X509 VAPID keys and a storage keyring of base64 AES-256 keys. If your application already encrypts subscriptions, you can supply a `runtime` mapping with `enabled()`, `context(notifiable)`, `cipher()`, and `transport()`. Keep the existing recipient and origin contexts so saved subscriptions can still be decrypted.
+
+To rotate a subscription storage key, add a new key to `storageKeys` and select its ID with `activeStorageKeyId`. Keep the old keys while saved subscriptions still use them. Changing the active storage key doesn't change the VAPID key pair used for browser enrollment.
 
 Push infrastructure is resolved when needed. A disabled channel or incomplete push configuration won't prevent unrelated channels from starting.
 
