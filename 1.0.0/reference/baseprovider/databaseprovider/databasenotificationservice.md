@@ -64,7 +64,7 @@ Notifications are ordered by exact creation time and ID, newest first. Cursor to
 
 ### snapshotIds
 
-Captures the IDs currently visible to a Notifiable. Pass `notifiable`, an optional `channelName`, authorization `constraints`, and `archiveMode` (default `all`).
+Captures all IDs currently matching the Notifiable's ownership, `constraints`, and `archiveMode`, without a page limit. Pass `notifiable`, an optional `channelName`, authorization `constraints`, and `archiveMode` (default `all`). For just the displayed page, take IDs from the cursor's `getResults()` instead.
 
 **Return**: An array of Notification IDs.
 
@@ -72,7 +72,7 @@ Captures the IDs currently visible to a Notifiable. Pass `notifiable`, an option
 
 Marks captured IDs as read if they are still authorized and unread. Pass `notifiable`, the captured `ids`, and the same channel and authorization constraints. You can also pass `readDate`, which defaults to now.
 
-Notifications that arrived after the snapshot stay unread. See [Notification Inboxes](../../../guides/notification-inboxes.md#marking-notifications-as-read) for choosing between snapshots and the cursor's read methods.
+Notifications that arrived after the snapshot stay unread. See [Notification Inboxes](../../../guides/notification-inboxes.md#marking-a-captured-set-as-read) for choosing between snapshots and the cursor's read methods.
 
 **Return**: `void`.
 

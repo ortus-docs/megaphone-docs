@@ -53,6 +53,8 @@ Use `constraints` for application authorization, such as limiting notifications 
 
 Display filters have a different purpose. For example, reading a notification removes it from an unread view, but shouldn't make its already-authorized handle unusable. On a numbered cursor, `configureQuery(callback, constrainMutations=false)` lets you add display filters without making them mutation constraints. Keep authorization in `constraints`.
 
+Loaded Notifications keep a separate query for mutations containing ownership and application authorization rules. It leaves out the page boundary and read/archive display filters. An entry loaded from an active, unread view can therefore be marked read, archived, and restored through the same handle. A real authorization change still prevents that handle from changing the entry.
+
 ### Marking notifications as read
 
 `markAsRead(readDate)` replaces the stored read timestamp, even when the Notification has already been read. The numbered cursor's `markAllAsRead(readDate)` does the same for its matching entries.
@@ -64,7 +66,34 @@ notifications[ 1 ].markAsReadIfUnread();
 user.getNotifications().markAllAsReadIfUnread();
 ```
 
-For a "mark what I just saw as read" action, capture IDs with `snapshotIds()` and pass those IDs to `markSnapshotAsRead()`. Megaphone only updates captured IDs that are still authorized and unread. Notifications arriving after the snapshot stay unread.
+### Marking a captured set as read
+
+Use `snapshotIds()` when an action should apply to the notifications matching the inbox at the start of that action. It captures all matching, authorized IDs, without a page limit:
+
+```js
+var capturedIds = databaseNotificationService.snapshotIds(
+    notifiable = user,
+    archiveMode = "active"
+);
+
+// Another Notification may arrive before this operation finishes.
+databaseNotificationService.markSnapshotAsRead(
+    notifiable = user,
+    ids = capturedIds
+);
+```
+
+Notifications arriving after the snapshot stay unread. `markSnapshotAsRead()` rechecks ownership and your authorization `constraints`, and only updates unread entries, preserving their first read timestamp. Pass your current authorization constraints when capturing and marking the set.
+
+`snapshotIds()` captures the whole matching inbox, rather than just the displayed page. For a "mark what I just saw as read" action, take IDs from the page's results instead:
+
+```js
+var displayedIds = inbox.getResults().map( ( notification ) => notification.getId() );
+databaseNotificationService.markSnapshotAsRead(
+    notifiable = user,
+    ids = displayedIds
+);
+```
 
 `archive()` and `unarchive()` change display state without changing the read date. Ownership and authorization checks still apply.
 
