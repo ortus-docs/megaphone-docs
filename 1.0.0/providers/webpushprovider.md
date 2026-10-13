@@ -4,9 +4,9 @@ The `WebPushProvider` sends a Notification to a Notifiable's registered browsers
 
 ### Requirements
 
-The bundled transport needs Java 11+. Megaphone declares the Web Push SDK as a pinned JAR dependency in `box.json`. CommandBox installs it with the module, so there's no separate SDK installation or build step.
+Use Megaphone's JDK 11+ baseline for the bundled transport. Megaphone declares the Web Push SDK as a pinned JAR dependency in `box.json`. CommandBox installs it with the module, so there's no separate SDK installation or build step.
 
-The SDK uses the JDK's HTTP client and needs no additional Java libraries or fat JAR. Megaphone verifies its checksum and loads it when you use Web Push; other channels don't require Java 11 or push configuration.
+The SDK uses the JDK's HTTP client and needs no additional Java libraries or fat JAR. Megaphone verifies its checksum and loads it when you use Web Push; other channels don't require push configuration.
 
 ### Configuration
 

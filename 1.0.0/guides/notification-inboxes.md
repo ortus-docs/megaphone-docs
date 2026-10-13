@@ -2,6 +2,19 @@
 
 The [DatabaseProvider](../providers/databaseprovider.md) gives you an inbox of saved Notifications for a Notifiable. You can keep using numbered pages, or use a cursor for a feed with a "load more" button.
 
+### Choosing a pagination method
+
+Both methods belong to the existing `DatabaseNotificationService` and return cursor objects. Choose the one that matches your interface:
+
+| Method | Use it for | Navigation |
+| --- | --- | --- |
+| `getNotifications()` | Numbered pages and views that show totals. | Start at `initialPage`, move with `next()` or `previous()`, and read `getPagination()` for totals. |
+| `getNotificationsAfter()` | A feed with "load more" or infinite scrolling. | Continue from an `afterCursor` token or call `next()`. No previous-page method, page numbers, or totals. |
+
+Suppose a user loads ten Notifications, then three new ones arrive. With numbered pages, those arrivals shift the positions used for page two, so some entries from page one can appear again. `getNotificationsAfter()` continues from the last seen creation time and ID instead, making it a better fit for a feed that changes while the user browses.
+
+`getNotificationsAfter()` is an additional option; `getNotifications()` remains supported. Their archive defaults also differ: numbered pages include all entries by default, while `getNotificationsAfter()` defaults to active entries. Pass `archiveMode="all"` if you want the latter to include archived entries too.
+
 ### Loading the next page
 
 Inject `DatabaseNotificationService@megaphone` and call `getNotificationsAfter()` for the first page:

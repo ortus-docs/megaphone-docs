@@ -1,6 +1,6 @@
 # Module Tests
 
-Want to run Megaphone's tests locally? Start with a checkout of the [module repository](https://github.com/coldbox-modules/megaphone) and install its development dependencies with `box install`.
+Want to run Megaphone's tests locally? Use JDK 11, start with a checkout of the [module repository](https://github.com/coldbox-modules/megaphone), and install its development dependencies with `box install`.
 
 ### Setting up the test database
 
