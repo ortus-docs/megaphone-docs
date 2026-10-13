@@ -2,17 +2,97 @@
 
 A Web Push subscription belongs to a particular browser on a particular device. `PushSubscriptionService` helps you manage those registrations for a Notifiable, including labels, renewal, and disconnecting a device.
 
-### Registering a browser
+### Getting a subscription from the browser
 
-Once your browser has created a subscription, send it to your application and register it for the current user:
+The `subscription` comes from the browser's [Push API](https://developer.mozilla.org/en-US/docs/Web/API/PushManager/subscribe). Register a service worker, then call `registration.pushManager.subscribe()` when the user chooses to enable push. This needs HTTPS, or localhost during development, and notification permission.
+
+You'll also need an `applicationServerKey`: the browser-compatible VAPID public key belonging to the key pair your [Web Push Provider](web-push.md) uses. Keep the private key on the server. The bundled runtime's `enrollmentConfiguration()` method returns this public key in the right format:
 
 ```js
+// Server-side, when using the bundled runtime's channel properties.
+var pushChannel = wirebox.getInstance( "megaphone:push" );
+var enrollment = wirebox.getInstance(
+    "WebPushRuntime@megaphone",
+    { "properties": pushChannel.getProperties() }
+).enrollmentConfiguration();
+```
+
+Check `enrollment.available` before offering enrollment, then pass `enrollment.applicationServerKey` to your page. If you use a custom runtime, have your application supply the corresponding browser-compatible public key. The bundled runtime converts the configured X509 public key for you; don't pass that encoded server key directly to the browser.
+
+Here's a browser example. Run the setup in a JavaScript module, then call `enablePush()` from an "Enable notifications" button after the service worker is ready:
+
+```js
+await navigator.serviceWorker.register( "/sw.js" );
+const registration = await navigator.serviceWorker.ready;
+
+async function enablePush( applicationServerKey, label, csrfToken ) {
+    const permission = await Notification.requestPermission();
+    if ( permission !== "granted" ) {
+        throw new Error( "Allow notifications to enable push." );
+    }
+
+    let subscription = await registration.pushManager.getSubscription();
+    if ( !subscription ) {
+        subscription = await registration.pushManager.subscribe( {
+            userVisibleOnly: true,
+            applicationServerKey
+        } );
+    }
+
+    const response = await fetch( "/account/push-registrations", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+        },
+        body: JSON.stringify( {
+            subscription: subscription.toJSON(),
+            label
+        } )
+    } );
+
+    if ( !response.ok ) {
+        throw new Error( "Could not save this browser's push registration." );
+    }
+    return response.json();
+}
+```
+
+The URL and CSRF header are examples for your application to implement. Use your usual authenticated request handling and show errors from `enablePush()` in the settings screen. Offer the button only when the browser supports service workers, `PushManager`, and `Notification`.
+
+[`getSubscription()`](https://developer.mozilla.org/en-US/docs/Web/API/PushManager/getSubscription) reuses an existing subscription for this service worker. [`toJSON()`](https://developer.mozilla.org/en-US/docs/Web/API/PushSubscription/toJSON) supplies the endpoint, expiry time, and keys that you send to the server. You don't need to assemble those values yourself.
+
+### Receiving push messages
+
+Create `/sw.js` in your application's web root. For the `title` and `body` payload shown in [Java Web Push](web-push.md#towebpush), a minimal service worker looks like this:
+
+```js
+self.addEventListener( "push", ( event ) => {
+    const message = event.data ? event.data.json() : {};
+    event.waitUntil( self.registration.showNotification(
+        message.title || "New notification",
+        { body: message.body || "" }
+    ) );
+} );
+```
+
+If your application already has a service worker, add the handler there and reuse its registration. Your application can also handle notification clicks and navigation. See MDN's [service worker registration](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register) and [push event](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/push_event) documentation for the browser APIs.
+
+### Saving the subscription in Megaphone
+
+In your application's POST handler, read the JSON request body and pass its `subscription` struct to Megaphone. Load `user` from the authenticated session:
+
+```js
+var payload = event.getHTTPContent( json = true );
 var registration = pushSubscriptionService.register(
     notifiable = user,
-    subscription = subscription,
-    label = "My laptop"
+    subscription = payload.subscription,
+    label = payload.label
 );
 ```
+
+Return `registration` as JSON to complete the browser request above. Megaphone supplies the registration service; your application supplies the HTTP endpoint and identifies the current user.
 
 Inject `PushSubscriptionService@megaphone` to get the service. It validates the subscription, hashes its endpoint, encrypts the subscription data, and saves it. The returned registration metadata leaves out endpoints, hashes, and encrypted keys, so you can use it in your device settings screen.
 
