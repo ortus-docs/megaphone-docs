@@ -18,7 +18,7 @@ box server start
 box testbox run
 ```
 
-The cbq integration specs insert real database jobs and execute their serialized delivery jobs. Test workers stay disabled so the suite controls when a job runs. Persistence specs roll back their test writes. Use a database set aside for this suite, separate from your application's data.
+The cbq integration specs insert real database jobs and execute their serialized delivery jobs. Test workers stay disabled so the suite controls when a job runs. Persistence specs roll back their test writes. Digest concurrency specs commit isolated fixtures so separate connections exercise the actual row locks, then remove only their own records. Use a database set aside for this suite, separate from your application's data.
 
 ### Testing BoxLang
 
@@ -49,3 +49,9 @@ The module's engine matrix covers Lucee 5/6 and Adobe ColdFusion 2021/2023 with 
 Your application's tests should also exercise its authorization constraints, preference scopes, queue transactions, worker handoff, and Provider callbacks. For Web Push, check browser enrollment and delivery on your actual devices as part of verifying the integration.
 
 The development checkout installs cbq for the queue integration suite. To exercise the optional-dependency checks, move `modules/cbq` out of the module discovery path, run the `tests.specs.integration.OptionalCBQSpec` bundle, then restore it. That bundle verifies startup, synchronous notifications, custom adapters, polling, and the `Megaphone.Queue.MissingCBQ` exception with cbq absent.
+
+### Testing email digests
+
+The suite covers module registration and storage configuration, collection through Notifications, independent named subscriptions, cutoff membership, native ColdBox schedules and task templates, consent and eligibility changes, mode changes, and simultaneous workers. Fixture email Providers return simulated receipts without sending live mail.
+
+`tasks/VerifyPostgres` includes the digest and storage suites for an explicitly provisioned disposable PostgreSQL database. When other module repositories live beside the checkout, set the test-only JVM property `megaphone.testModuleRoot` to an isolated parent containing only this checkout as `megaphone`; the HTTP test application uses that directory for external module discovery.

@@ -79,3 +79,7 @@ public struct function toDatabase( required any notifiable ) {
 The `to{ChannelType}` methods also receive the `Notifiable` reference as an argument in case you need to return different data based on the specific `Notifiable` instance.
 
 Each Provider has their own requirements for their `to{ChannelType}` methods.  See the Provider-specific documentation for more information.
+
+### Collecting for an email digest
+
+A Notification can select an [EmailDigestProvider](../providers/emaildigestprovider.md) channel and return its named digest, stable item key, persisted occurrence time, and JSON-safe data from `toEmailDigest()`. Use [Named Email Digests](../guides/email-digests.md#choosing-a-delivery-mode) when `via()` should choose Off, Immediate email, or Digest from a named subscription.

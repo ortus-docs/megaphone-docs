@@ -331,3 +331,9 @@ You can also supply an adapter instance. Without an override, Megaphone uses `CB
 Your worker calls `NotificationDeliveryService.dispatch(deliveryId)` and uses the returned `DeliveryResult`. If you schedule another job after a `retryable`, `deferred`, or `busy` result, reload the delivery and respect its current state and availability date. For a busy delivery, wait until its lease expires. Let Megaphone control the transport allowance, and never automatically resend an accepted or ambiguous delivery. See [Delivery Operations](delivery-operations.md) for recovery and receipt reconciliation.
 
 If you prefer a scheduled polling worker, explicitly set `queue.queueAdapter` to an empty string. Megaphone still saves deliveries; your worker can find them with `getDueDeliveries()` and handle expired leases with `recoverExpired()`.
+
+### Collecting a digest
+
+An [EmailDigestProvider](../providers/emaildigestprovider.md) channel first admits the Notification into collection. Scheduled subscriptions wait for a cutoff; immediate subscriptions freeze a one-item batch for the same digest renderer. `plan()` captures its item, and `queuePlan()` persists that collection in the publication transaction. The publication's `getCollections()` admissions are separate from `getDeliveries()`; collection never means Provider acceptance.
+
+Use [Named Email Digests](email-digests.md) to configure independent subscriptions, consent and eligibility, rendering, and the due scheduler. Its nonempty batches create ordinary durable email deliveries that use the same claims, attempts, and receipt reconciliation described here.
