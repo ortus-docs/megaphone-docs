@@ -89,6 +89,22 @@ The source Notification does not need `toEmail()` or a separate immediate-email 
 
 A repeated identical subscription update keeps pending items. Changing mode, timezone, or schedule starts a new generation and suppresses obsolete collected work. Returning to Digest does not replay it. Call `setSubscription()` transactionally when the application changes that preference or confirmed timezone. Subscriptions using the named default resolve it again after application reload; explicit shortcut overrides remain independent. Treat a change to configured schedules as an application reload. Use `registerDigest()` to add a new name at runtime.
 
+### Use one email route per product-update notification
+
+In the catalog example, `ProductUpdatedNotification.via()` returns only `[ "emailDigest" ]`. It does not return `[ "email", "emailDigest" ]`. The named subscription chooses the timing within that one route:
+
+| Subscription mode | Notification route | Result |
+| --- | --- | --- |
+| `immediate` | `[ "emailDigest" ]` | One item is rendered and delivered immediately through the digest pipeline. |
+| `digest` | `[ "emailDigest" ]` | The item is collected for the next scheduled summary. |
+| `off` or absent | `[ "emailDigest" ]` | The digest item is suppressed and no email is created for it. |
+
+Returning `[ "email", "emailDigest" ]` creates two independent delivery paths; it does not choose one based on the digest subscription. If both paths are enabled and the subscription is immediate, the recipient can receive two emails about the same update: the original Notification's `toEmail()` and the digest renderer's one-item email. With a scheduled subscription, they can receive an individual email now and the update again in a later summary. Turning the digest off does not disable the separate ordinary-email route, which follows its own preferences.
+
+The definition's `emailChannel: "email"` identifies the transport used by the digest pipeline. Configuring that transport does not mean adding `email` to the source Notification's `via()`.
+
+An order receipt is a separate `OrderConfirmedNotification` whose `via()` returns `[ "email" ]`. Thus the application can offer receipts and product updates while each Notification has one email delivery path. Use both channels on a single Notification only when the product deliberately needs two distinct messages from that occurrence; the product-update example has no such requirement.
+
 ### Why use an immediate digest?
 
 Imagine a catalog application where Mia follows camera products and also buys them. A new lens listing and an order receipt are different email products, even when both arrive immediately:
@@ -163,7 +179,7 @@ Immediate items retain their stable item, batch, and delivery identities. A repl
 
 Offer Immediate and Scheduled Digest as mutually exclusive choices when recipients want either each update as it happens or a daily/weekly summary. A subscription has one mode, so the same event is not automatically sent through both paths. Different products can also use different timings, such as immediate announcements and weekly product summaries.
 
-For one notification and recipient, sending both an immediate email and a later digest usually repeats content. Support that only when the summary has a distinct purpose and the user explicitly chooses both products. Ordinary transactional email remains a separate channel for notifications that do not belong in a digest.
+Offering both timing choices still uses only `[ "emailDigest" ]` in the product-update Notification. The subscription picks Immediate or Scheduled Digest; adding `email` to `via()` would add another email rather than another timing choice. Ordinary transactional email, such as an order receipt, belongs to a separate Notification using `[ "email" ]`.
 
 ### Scheduling with ColdBox
 
