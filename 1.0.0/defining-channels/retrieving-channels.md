@@ -2,7 +2,7 @@
 
 Though not a common use case, you can retrieve configured Channel instances using the Megaphone Channel WireBox DSL.
 
-<pre class="language-cfscript"><code class="lang-cfscript"><strong>// config/modules/megaphone.cfc
+<pre class="language-js"><code class="lang-js"><strong>// config/modules/megaphone.cfc
 </strong>component {
 
     function configure() {
@@ -13,7 +13,7 @@ Though not a common use case, you can retrieve configured Channel instances usin
 		    "provider": "DatabaseProvider@megaphone",
 		    "properties": {
                         // this is the default table name
-                        "tableName": "megaphone_notifications",
+                        "table": "megaphone_notifications",
                         "datasource": "megaphone"
                     }
                 }
@@ -24,6 +24,6 @@ Though not a common use case, you can retrieve configured Channel instances usin
 }
 </code></pre>
 
-```cfscript
+```js
 var databaseChannel = wirebox.getInstance( "megaphone:database" );
 ```

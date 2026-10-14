@@ -28,7 +28,7 @@ Converts the `HeaderBlock` instance to a serializable format.
 
 **Return**: (`struct`) A struct representing this `HeaderBlock` instance.
 
-```cfscript
+```js
 {
     "type": "header",
     "text": {

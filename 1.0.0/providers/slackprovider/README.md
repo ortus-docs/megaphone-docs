@@ -23,7 +23,7 @@ The `SlackProvider` accepts the following properties:
 
 The `toSlack` method should return a `SlackMessage` instance.
 
-```cfscript
+```js
 public struct function toSlack( notifiable, newSlackMessage ) {
     return newSlackMessage()
         .to( "##payments" )
@@ -52,7 +52,7 @@ Megaphone includes components to build out a Slack BlockKit payload using a flue
 
 Additionally, you can return a struct representation of the Slack BlockKit payload instead of using `SlackMessage` or the included `SlackBlockKit` components.
 
-```cfscript
+```js
 public struct function toSlack( notifiable, newSlackMessage ) {
     return {
         "channel": "##general",
@@ -65,7 +65,7 @@ public struct function toSlack( notifiable, newSlackMessage ) {
 
 You can let the `Notifiable` instance define the channel to send the Slack Notification by adding a `routeNotificationForSlack` method.
 
-```cfscript
+```js
 component accessors="true" {
     
     property name="slackDirectMessageID";
@@ -79,7 +79,7 @@ component accessors="true" {
 
 Additionally, you may need to use a different token for a notification.  Reasons for this can include sending your notification to multiple different Slack Workspaces depending on the `Notifiable` instance's configuration.  In these cases, you need to return a `SlackRoute` instance from this method.  A helper function is provided to create the `SlackRoute` as a parameter to the `routeNotificationForSlack` method.
 
-```cfscript
+```js
 component accessors="true" {
     
     property name="slackDirectMessageID";

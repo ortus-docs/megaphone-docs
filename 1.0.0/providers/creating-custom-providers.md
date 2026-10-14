@@ -4,7 +4,7 @@ Providers must extend `megaphone.models.Providers.BaseProvider`.
 
 There are two required methods to implement: `getProviderName` and `notify`.
 
-```cfscript
+```js
 /**
  * Returns the name for this Provider.
  * This name is the same across all different channels using the same Provider.
@@ -34,7 +34,7 @@ Inside the `notify` method, there are two helper methods to help you implement y
 
 Here is an example using the `EmailProvider`:
 
-```cfscript
+```js
 public BaseNotification function notify(
     required any notifiable,
     required BaseNotification notification
@@ -78,7 +78,7 @@ This is a great place to pass helper functions to construct necessary objects fo
 
 The return value from this function is `any`.  It is the responsibility of your Provider to ensure the return value of this function is what you expected.  For instance, the `DatabaseProvider` expects a struct, the `EmailProvider` expects a `Mail@cbmailservices` instance, and so forth.
 
-```cfscript
+```js
 var mail = arguments.notification.routeForType(
     type = "email",
     notifiable = notifiable,
@@ -102,14 +102,14 @@ Additionally, the `routeNotificationFor` method can be marked as `optional`.  Op
 
 The return value from this function is `any`.  It is the responsibility of your Provider to ensure the return value of this function is what you expected.  For instance, the `EmailProvider` expects a `string` value, the `SlackProvider` expects either a `string` value or a `SlackRoute` value.
 
-```cfscript
+```js
 // EmailProvider.cfc
 if ( mail.getProperty( "to" ) == "" ) {
     mail.setProperty( "to", routeNotificationFor( "email", notifiable, getName() ) );
 }
 ```
 
-```cfscript
+```js
 // SlackProvider.cfc
 var route = routeNotificationFor(
     type = "slack",

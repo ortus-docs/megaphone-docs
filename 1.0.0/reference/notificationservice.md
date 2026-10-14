@@ -27,3 +27,51 @@ Returns a map of channel names to Provider instances.
 <table><thead><tr><th width="149">Name</th><th width="229">Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td>No arguments</td><td></td><td></td><td></td><td></td></tr></tbody></table>
 
 **Return**: A `struct` map of channel names to Provider instances.
+
+### plan
+
+Captures the recipients, channels, preferences, devices, and properties for a queued Notification without saving or sending it. Like `notify()`, it accepts a Notification instance or a WireBox name.
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `notifiables` | `INotifiable` or array | true | | The Notifiables that should receive the Notification. |
+| `notification` | `string` or `BaseNotification` | true | | The Notification instance or its WireBox mapping. |
+| `properties` | `struct` | false | `{}` | Properties to populate on the Notification. |
+| `options` | `struct` | false | `{}` | Event identity, occurrence time, availability date, and optional admission cutoff. |
+| `connection` | `string` | false | | A registered cbq connection. Overrides `queue.defaultConnection`; otherwise cbq uses its default connection. |
+| `queue` | `string` | false | | A queue on the selected connection. Overrides `queue.defaultQueue`; otherwise cbq uses the selected connection's default queue. |
+
+With cbq's standard defaults, omitted `connection` and `queue` arguments both use `default`. Configured `queue.defaultConnection` and `queue.defaultQueue` settings or custom cbq defaults take precedence.
+
+**Return**: A `NotificationPlan`. See [Event Identities](../guides/event-identities.md) for the available options and saving its memento.
+
+{% hint style="danger" %}
+**Throws:** `Megaphone.Configuration.UnsupportedDurableProvider` if a selected channel does not support durable delivery.
+{% endhint %}
+
+### queue
+
+Plans and saves a Notification for delivery by a worker. It accepts the same arguments as `plan()`.
+
+Install and configure cbq in your application to use the bundled adapter. If cbq is unavailable when it tries to enqueue, Megaphone throws `Megaphone.Queue.MissingCBQ`.
+
+The bundled cbq adapter dispatches a delivery job to the configured queue, using the Provider on its registered connection. Megaphone saves the event and deliveries transactionally; an enqueue failure rolls back those records. Queue-side rollback and execution timing follow the chosen Provider. A database queue on the same datasource can join the transaction. Repeating an event identity with the same payload hash returns its original work.
+
+**Return**: A `NotificationPublication`, with `getEvent()` and `getDeliveries()` accessors. See [Durable Delivery](../guides/durable-delivery.md) for cbq setup and examples. Its final section covers [custom queue adapters](../guides/durable-delivery.md#making-a-custom-queue-adapter).
+
+### queuePlan
+
+Queues a previously captured `NotificationPlan`. Use this when your application saved a plan before handing it to a worker.
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `plan` | `NotificationPlan` | true | | The original plan, including its captured recipients and channel choices. |
+| `alreadyAdmitted` | `boolean` | false | `false` | Bypasses the admission cutoff for a trusted producer that already saved and validated admission. |
+| `connection` | `string` | false | | Overrides the plan's saved cbq connection for this handoff. |
+| `queue` | `string` | false | | Overrides the plan's saved queue for this handoff. |
+
+The plan retains explicit `connection` and `queue` arguments in its optional `queueOptions` memento. cbq supplies omitted route and worker settings.
+
+Queueing a saved plan keeps its original audience, payload, times, and hashes. It doesn't enable a channel that was suppressed in the plan.
+
+**Return**: A `NotificationPublication`. An occurrence before the plan's admission cutoff returns an expired publication without saving work, unless `alreadyAdmitted` is true.

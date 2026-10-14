@@ -43,3 +43,21 @@ Returns all unread database notifications for this Notifiable.
 
 **Throws:** `Megaphone.Configuration.InvalidChannelProvider`
 {% endhint %}
+
+### getNotificationsAfter
+
+Loads a cursor page from this Notifiable's inbox. The delegate supplies the Notifiable for you:
+
+```js
+var inbox = user.getNotificationsAfter( maxRows = 25 );
+```
+
+It accepts `channelName`, `afterCursor`, `maxRows`, `constraints`, `archiveMode`, and `unread`, with the same defaults as [DatabaseNotificationService.getNotificationsAfter](databasenotificationservice.md#getnotificationsafter). Loaded Notifications keep ownership and authorization checks for later mutations.
+
+**Return**: A [DatabaseNotificationKeysetCursor](databasenotificationkeysetcursor.md).
+
+### Other inbox methods
+
+The delegate also provides `getNotification()`, `countUnreadNotifications()`, `snapshotIds()`, `markSnapshotAsRead()`, and `pruneNotifications()`. Each uses this Notifiable, so you can call the service's inbox operations directly from your user or other Notifiable model.
+
+See [Notification Inboxes](../../../guides/notification-inboxes.md) for examples and read-state behavior.

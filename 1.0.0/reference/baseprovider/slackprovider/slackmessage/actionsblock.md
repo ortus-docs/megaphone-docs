@@ -48,7 +48,7 @@ Converts the `ActionsBlock` instance to a serializable format.
 **Throws:** `Megaphone.Provider.SlackBlockException` when either 0 or more than 25 elements are present.
 {% endhint %}
 
-```cfscript
+```js
 {
     "type": "actions"
     "elements": [ ... ],

@@ -2,7 +2,7 @@
 
 Megaphone provides a fluent BlockKit API to build a `SlackMessage`.  It starts by calling the `newSlackMessage` provided to the `toSlack` method on the Notification.
 
-```cfscript
+```js
 function toSlack( notifiable, newSlackMessage ) {
     return newSlackMessage();
 }
@@ -16,7 +16,7 @@ For the individual methods and building blocks, please see the reference documen
 
 An important callout is the `dump` method.  This method can `writeDump` a memento of the `SlackMessage` instance when passing the `raw` parameter as `true`.  The default, however, is to `writeDump` a URL that takes you to Slack's [BlockKit Builder](https://app.slack.com/block-kit-builder/) to visually see your message.
 
-```cfscript
+```js
 public void function dump(
     boolean raw = false,
     string output = "browser",

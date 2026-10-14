@@ -28,7 +28,7 @@ Converts the `DividerBlock` instance to a serializable format.
 
 **Return**: (`struct`) A struct representing this `DividerBlock` instance.
 
-```cfscript
+```js
 {
     "type": "divider"
     "block_id": "optional"

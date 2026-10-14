@@ -28,7 +28,7 @@ Converts the `ImageElement` instance to a serializable format.
 
 **Return**: (`struct`) A struct representing this `ImageElement` instance.
 
-```cfscript
+```js
 {
     "type": "image",
     "image_url": "https://placekitten.com/200/300",

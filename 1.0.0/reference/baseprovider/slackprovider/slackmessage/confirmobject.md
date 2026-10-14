@@ -60,7 +60,7 @@ Converts the `ConfirmObject` instance to a serializable format.
 
 **Return**: (`struct`) A struct representing this `ConfirmObject` instance.
 
-```cfscript
+```js
 {
     "title": {
         "type": "plain_text",

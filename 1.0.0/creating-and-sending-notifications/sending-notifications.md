@@ -6,7 +6,7 @@ There are two ways to send notifications in Megaphone — using the [`Notificati
 
 Notifications are sent using the [`NotificationService`](../reference/notificationservice.md), often aliased as `megaphone`.
 
-```cfscript
+```js
 // handlers/StockRebalancing.cfc
 component {
 
@@ -26,7 +26,7 @@ component {
 
 For those of you allergic to calling `getInstance` (😜), you can also pass a string name and a struct of properties:
 
-```cfc
+```js
 // handlers/StockRebalancing.cfc
 component {
 
@@ -49,7 +49,7 @@ component {
 
 Another way to send a Notification is by adding the [`SendsNotifications`](../reference/sendsnotifications.md) delegate to a [`Notifiable`](../reference/inotifiable.md) instance.
 
-```cfc
+```js
 component name="User" delegates="SendsNotifications@megaphone" accessors="true" {
 
     property name="id";
@@ -67,7 +67,7 @@ component name="User" delegates="SendsNotifications@megaphone" accessors="true" 
 
 Then you can call a `notify` method on the [`Notifiable`](../reference/inotifiable.md) instance.
 
-```cfc
+```js
 // handlers/StockRebalancing.cfc
 component {
 

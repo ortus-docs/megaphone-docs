@@ -1,24 +1,18 @@
 # What's New?
 
-## 1.0.4
+### 1.1.0
 
-* [**SlackProvider**](providers/slackprovider/): Use default [`SlackRoute`](providers/slackprovider/#routenotificationforslack) object if none is returned.
+You can now queue a Notification using the same conventions as `notify()`. Pass a Notifiable, a Notification instance or WireBox name, and its properties. Megaphone saves the delivery decisions so a worker can send it later.
 
-## 1.0.3
+Megaphone includes a default cbq adapter and expects your application to install cbq when using it, so you don't need to write your own delivery job. You can still configure another adapter when your application needs one.
 
-* Only invoke routing methods ([`routeFor{Provider}`](reference/baseprovider/#routenotificationfor)) if they exist.
+Want to capture the decision before handing work to a queue? `plan()` returns a `NotificationPlan` you can save and restore. Repeating a stable event key returns the original work, without adding recipients or channels that weren't in the first plan.
 
-## 1.0.2
+There are also new ways to manage notifications in your application:
 
-* Ensure optional dependencies are activated when registering channels.
+- [Notification Inboxes](guides/notification-inboxes.md) adds "load more" pagination, archive state, and read snapshots.
+- [Notification Preferences](guides/notification-preferences.md) stores channel choices for scopes defined by your application.
+- [WebPushProvider](providers/webpushprovider.md) sends through registered devices, with [Push Registrations](guides/push-registrations.md) for device management.
+- [Delivery Operations](guides/delivery-operations.md) lets you inspect history, reconcile receipts, and request recovery.
 
-## 1.0.1
-
-#### [EmailProvider](providers/slackprovider/#configuration)
-
-* Use the default mailer from `cbMailServices` if no default mailer is configured for Megaphone.
-* Log mail `send` successes to `info` and errors to `error` by default.
-
-## 1.0.0
-
-### Initial Release!
+Your existing synchronous notifications and numbered inbox cursors still work. Start with [Durable Delivery](guides/durable-delivery.md), or read the [Upgrade Guide](upgrade-guide.md) if you are moving an existing application to 1.1.0.

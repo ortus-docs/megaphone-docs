@@ -2,13 +2,15 @@
 
 The `DatabaseProvider` stores notifications in a table that you can then query to show in your application.  It also provides a `DatabaseNotificationService` to interact with the notifications for a `Notifiable` including pagination and marking as read.
 
+Want to add a "load more" button, archive old entries, or mark only the Notifications a user has seen as read? See [Notification Inboxes](../guides/notification-inboxes.md) for those examples, along with authorization, imports, and retention.
+
 ### Requirements
 
 To use the `DatabaseProvider`, you need a table to store the notifications in.  A migration is provided in Megaphone that you can copy to your application to use.  If you are not using `cfmigrations`, create a table that has the same structure in your database.  The table name can be customized, if needed.
 
 {% tabs %}
 {% tab title="CFMigrations" %}
-```cfscript
+```js
 component {
 
     function up( schema ) {
@@ -78,7 +80,7 @@ The `DatabaseProvider` accepts the following properties:
 
 ```json
 {
-    "tableName": "megaphone_notifications",
+    "table": "megaphone_notifications",
     "datasource": null,
     "queryOptions": {}
 }
@@ -86,7 +88,7 @@ The `DatabaseProvider` accepts the following properties:
 
 These can be different for each channel you configure using the `DatabaseProvider`.
 
-```cfscript
+```js
 moduleSettings = {
     "megaphone": {
         "channels": {
@@ -111,7 +113,7 @@ The `datasource` property will override any `datasource` property on the passed-
 
 The `toDatabase` method returns a `struct` of data to save as the body of the notification in the database.  This data will be available when reading the notifications back from the database later.
 
-```cfscript
+```js
 public struct function toDatabase( required any notifiable ) {
     return {
         "stockSymbol": getStockSymbol(),
@@ -130,7 +132,7 @@ Just like sending notifications, there are two ways to retrieve notifications se
 
 The `DatabaseNotificationService` can be injected into any component in your application to retrieve `DatabaseNotification` instances for a `Notifiable`.
 
-```cfscript
+```js
 component {
     
     property
@@ -165,7 +167,7 @@ The `DatabaseNotificationService` also includes methods for retrieving read noti
 
 The `HasDatabaseNotifications` delegate allows you to get the notifications directly from a `Notifiable` instance.
 
-```cfscript
+```js
 component name="User" delegates="HasDatabaseNotifications@megaphone" accessors="true" {
 
     property name="id";
@@ -181,7 +183,7 @@ component name="User" delegates="HasDatabaseNotifications@megaphone" accessors="
 }
 ```
 
-```cfscript
+```js
 component {
 
     function index( event, rc, prc ) {
@@ -208,7 +210,7 @@ component {
 
 The `DatabaseNotificationCursor` provides a way to paginate through the notifications while also being able to either `markAllAsRead` or `deleteAll` of the notifications contained in the cursor.
 
-```cfc
+```js
 cursor.getPagination(); // { "maxRows": 25, "totalPages": 1, "offset": 0, "page": 1, "totalRecords": 5 }
 cursor.getResults(); // [ DatabaseNotification ]
 for ( var notification in cursor.getResults() ) {
@@ -234,7 +236,7 @@ cursor.deleteAll(); // deletes all, not just current page
 
 The component returned as the notification inside the `DatabaseNotificationCursor` is an instance of `DatabaseNotification`. This allows you to retrieve the data you sent as well as interact with the `DatabaseNotification` by checking the sending `Notification` type, marking the `DatabaseNotification` as read or deleting the `DatabaseNotification`.
 
-```cfscript
+```js
 notification.getMemento(); // { id, type, notifiableType, notifiableId, data, readDate, createdDate }
 notification.getData(); // struct / already deserialized
 notification.getType(); // string — notification wirebox id

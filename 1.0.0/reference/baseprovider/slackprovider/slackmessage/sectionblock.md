@@ -52,7 +52,7 @@ Converts the `SectionBlock` instance to a serializable format.
 
 **Return**: (`struct`) A struct representing this `SectionBlock` instance.
 
-```cfscript
+```js
 {
     "type": "section",
     "text": {

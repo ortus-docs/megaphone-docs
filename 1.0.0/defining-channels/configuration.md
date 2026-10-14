@@ -2,7 +2,7 @@
 
 Like cbmailservices and cbfs, Megaphone creates channels to send `Notification` instances on.  Channels are created by defining `provider` and any necessary `properties`.
 
-<pre class="language-cfscript"><code class="lang-cfscript"><strong>// config/modules/megaphone.cfc
+<pre class="language-js"><code class="lang-js"><strong>// config/modules/megaphone.cfc
 </strong>component {
 
     function configure() {
@@ -13,7 +13,7 @@ Like cbmailservices and cbfs, Megaphone creates channels to send `Notification` 
 		    "provider": "DatabaseProvider@megaphone",
 		    "properties": {
                         // this is the default table name
-                        "tableName": "megaphone_notifications",
+                        "table": "megaphone_notifications",
                         "datasource": "megaphone"
                     }
                 },

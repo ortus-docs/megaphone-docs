@@ -2,25 +2,45 @@
 
 ### markAsRead
 
-Marks the notification as read and updates the database.
+Marks the notification as read and updates the database. Calling this again replaces the stored read timestamp. Use `markAsReadIfUnread()` if you want to keep the first read time.
 
 <table><thead><tr><th width="156">Name</th><th width="229">Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td>readDate</td><td><code>date</code></td><td>false</td><td><code>now()</code></td><td>The date to use when marking the notification as read.</td></tr></tbody></table>
 
 **Return**: This `DatabaseNotification` instance.
 
-### markAsRead
+### markAsReadIfUnread
+
+Marks the Notification as read only if it hasn't been read yet. `readDate` defaults to now. Ownership and the authorization constraints used to load the Notification still apply.
+
+**Return**: This `DatabaseNotification` instance.
+
+### archive
+
+Archives the Notification without changing its read date. `archivedDate` defaults to now. Inbox state must be enabled on the Database channel.
+
+**Return**: This `DatabaseNotification` instance.
+
+### unarchive
+
+Returns an archived Notification to the active inbox without changing its read date. Ownership and authorization checks still apply.
+
+**Return**: This `DatabaseNotification` instance.
+
+See [Notification Inboxes](../../../guides/notification-inboxes.md) for configuration and read snapshots.
+
+### delete
 
 Deletes the notification from the database.
 
 <table><thead><tr><th width="156">Name</th><th width="229">Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td>No arguments</td><td></td><td></td><td></td><td></td></tr></tbody></table>
 
-**Return**: This `DatabaseNotification` instance.
+**Return**: `void`.
 
 ### getMemento
 
 Returns a serializable representation of this `DatabaseNotification`.
 
-```cfscript
+```js
 {
     "id": getId(),
     "type": getType(),
@@ -178,7 +198,7 @@ Consider using the `markAsRead` method instead of interacting with this setter d
 
 **Return**: This `DatabaseNotification` instance.
 
-### setReadDate
+### setCreatedDate
 
 Sets the created date of the `DatabaseNotification`.
 

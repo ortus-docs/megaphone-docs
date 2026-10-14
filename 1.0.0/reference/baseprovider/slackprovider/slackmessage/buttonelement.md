@@ -76,7 +76,7 @@ Converts the `ButtonElement` instance to a serializable format.
 
 **Return**: (`struct`) A struct representing this `ButtonElement` instance.
 
-```cfscript
+```js
 {
     "type": "button",
     "text": {

@@ -1,5 +1,7 @@
 # DatabaseNotificationService
 
+Use this service to load a Notifiable's inbox, count unread Notifications, and manage saved history. For a walkthrough of pagination, read state, and authorization, see [Notification Inboxes](../../../guides/notification-inboxes.md).
+
 ### getNotifications
 
 Returns all database notifications for a Notifiable.
@@ -41,3 +43,49 @@ Returns all unread database notifications for a Notifiable.
 
 **Throws:** `Megaphone.Configuration.InvalidChannelProvider`
 {% endhint %}
+
+### getNotificationsAfter
+
+Returns a page of Notifications for a Notifiable using a forward-only cursor. Use it for an inbox with a "load more" button.
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `notifiable` | `INotifiable` | true | | The Notifiable whose inbox to load. |
+| `channelName` | `string` | false | `database` | The Database channel to query. |
+| `afterCursor` | `string` | false | Empty string | A token from the previous page. Leave empty for the first page. |
+| `maxRows` | `numeric` | false | `25` | The number of Notifications per page. |
+| `constraints` | Query callback | false | Not set | Your application's authorization constraints. |
+| `archiveMode` | `string` | false | `active` | Which archive state to display: `active`, `archived`, or `all`. |
+| `unread` | `boolean` | false | `false` | Limits the page to unread Notifications when true. |
+
+Notifications are ordered by exact creation time and ID, newest first. Cursor tokens belong to the Notifiable, and loaded Notifications retain authorization constraints for mutations. Reset the cursor when changing filters.
+
+**Return**: A [DatabaseNotificationKeysetCursor](databasenotificationkeysetcursor.md).
+
+### snapshotIds
+
+Captures all IDs currently matching the Notifiable's ownership, `constraints`, and `archiveMode`, without a page limit. Pass `notifiable`, an optional `channelName`, authorization `constraints`, and `archiveMode` (default `all`). For just the displayed page, take IDs from the cursor's `getResults()` instead.
+
+**Return**: An array of Notification IDs.
+
+### markSnapshotAsRead
+
+Marks captured IDs as read if they are still authorized and unread. Pass `notifiable`, the captured `ids`, and the same channel and authorization constraints. You can also pass `readDate`, which defaults to now.
+
+Notifications that arrived after the snapshot stay unread. See [Notification Inboxes](../../../guides/notification-inboxes.md#marking-a-captured-set-as-read) for choosing between snapshots and the cursor's read methods.
+
+**Return**: `void`.
+
+### importNotification
+
+Stores existing inbox history using a stable `id`, without sending through other channels. Pass `notifiable`, `id`, `type`, and a `data` struct. You can also preserve `createdDate`, `readDate`, `groupKey`, and `archivedDate`, and select a `channelName`.
+
+Group and archive values require inbox state to be enabled. An ID already owned by another Notifiable or Notification type is rejected.
+
+**Return**: The stored `DatabaseNotification` instance.
+
+### pruneNotifications
+
+Removes a bounded batch of old Notifications for a Notifiable, including archived entries. `keep` defaults to `1000`, `batchSize` to `200`, and `channelName` to `database`.
+
+**Return**: The number of deleted Notifications.
