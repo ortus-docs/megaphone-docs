@@ -58,3 +58,5 @@ The Provider calls `toEmailDigest()` through the usual `routeForType()` helper. 
 Keep `via()` returning `[ "emailDigest" ]` for either timing. Megaphone reads Off, Immediate, or Digest from the named subscription. Immediate uses the digest renderer with one item; no separate source `toEmail()` or ordinary email route is needed. An immediate-only definition can omit `schedule`. Changing a subscription does not send or replay earlier items. See [Choosing a Delivery Mode](../guides/email-digests.md#choosing-a-delivery-mode) for an example.
 
 See [An Immediate-only Digest Policy](../guides/email-digests.md#an-immediate-only-digest-policy) for a complete On/Off product example.
+
+See [Why Use an Immediate Digest?](../guides/email-digests.md#why-use-an-immediate-digest) for a catalog example comparing ordinary immediate email, an immediate digest, and both products.

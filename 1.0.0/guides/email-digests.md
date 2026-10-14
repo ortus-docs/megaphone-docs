@@ -89,6 +89,24 @@ The source Notification does not need `toEmail()` or a separate immediate-email 
 
 A repeated identical subscription update keeps pending items. Changing mode, timezone, or schedule starts a new generation and suppresses obsolete collected work. Returning to Digest does not replay it. Call `setSubscription()` transactionally when the application changes that preference or confirmed timezone. Subscriptions using the named default resolve it again after application reload; explicit shortcut overrides remain independent. Treat a change to configured schedules as an application reload. Use `registerDigest()` to add a new name at runtime.
 
+### Why use an immediate digest?
+
+Imagine a catalog application where Mia follows camera products and also buys them. A new lens listing and an order receipt are different email products, even when both arrive immediately:
+
+| Product | Delivery choice | Why it fits |
+| --- | --- | --- |
+| An order receipt: "Your order #1842 is confirmed" | Ordinary immediate email | An `OrderConfirmedNotification` supplies its own `toEmail()` with the purchased items, totals, and order link. Its content describes that completed transaction. |
+| A followed-product update: "A new lens matches your interests" | Immediate digest | A `productUpdates` subscription sends one eligible update through `ProductDigestRenderer`. It uses the feed's consent, current catalog visibility, item selection, and unsubscribe rules. |
+| Order receipts plus followed-product updates | Both email products | Mia can receive receipts for her purchases and separately opt into the update feed. Unsubscribing from `productUpdates` changes the feed, while order-message preferences remain independent. |
+
+For the update feed, Mia might choose "As they happen" while another subscriber chooses "Weekly." The immediate subscriber receives a one-item digest; the weekly subscriber receives a batch through the same renderer. The application publishes one kind of item and maintains one set of feed rules, rather than a second immediate-email implementation. If the product only offers "As they happen," its preference UI can be On/Off and its definition can omit the calendar schedule, as shown below.
+
+The current-content check matters here: a lens that has been withdrawn before transport should be omitted from the discovery feed. An order receipt has a different purpose: it describes what Mia purchased, using the order's saved details. Each product needs its own eligibility and consent rules.
+
+Choose ordinary immediate email for an event-specific message when you do not need a named update stream or shared digest rendering. Choose an immediate digest when the message belongs to such a stream, whether or not you currently offer a scheduled summary. Both can use Megaphone's durable email transport, retries, and deduplication; those features alone are not a reason to choose the digest pipeline.
+
+Supporting both products does not mean routing one update to both `email` and `emailDigest`. In this example, an order confirmation publishes the receipt and a new matching listing publishes the feed item. If one occurrence legitimately requires two messages, give each a distinct purpose and preference rule; otherwise choose the one that serves the recipient's need.
+
 ### An immediate-only digest policy
 
 An application that wants the digest renderer for every individual item does not need to support scheduled Digest as another user choice. Omit the calendar schedule, use an immediate subscription, and keep `via()` returning only `[ "emailDigest" ]`:
