@@ -26,7 +26,7 @@ Define the named digests under `moduleSettings.megaphone.digests`. The schedule 
 ```cfml
 "digests": {
     "productUpdates": {
-        "schedule": { "cadence": "weekly", "weekday": 1, "time": "09:00" },
+        "schedule": "everyWeekOn 1 09:00",
         "emailChannel": "email",
         "policy": "ProductDigestPolicy",
         "renderer": "ProductDigestRenderer"

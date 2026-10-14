@@ -52,6 +52,6 @@ The development checkout installs cbq for the queue integration suite. To exerci
 
 ### Testing email digests
 
-The suite covers module registration and storage configuration, collection through Notifications, independent named subscriptions, cutoff membership, local-time schedules and DST, consent and eligibility changes, mode changes, and simultaneous workers. Fixture email Providers return simulated receipts without sending live mail.
+The suite covers module registration and storage configuration, collection through Notifications, independent named subscriptions, cutoff membership, native ColdBox schedules and task templates, consent and eligibility changes, mode changes, and simultaneous workers. Fixture email Providers return simulated receipts without sending live mail.
 
 `tasks/VerifyPostgres` includes the digest and storage suites for an explicitly provisioned disposable PostgreSQL database. When other module repositories live beside the checkout, set the test-only JVM property `megaphone.testModuleRoot` to an isolated parent containing only this checkout as `megaphone`; the HTTP test application uses that directory for external module discovery.

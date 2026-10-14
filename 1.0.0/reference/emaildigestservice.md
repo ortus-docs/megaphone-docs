@@ -4,15 +4,15 @@
 
 ### getDefinition
 
-`getDefinition(digestName)` returns the configured definition after validating its required fields and `maxItems` bound. The result includes the canonical name, schedule, email channel, policy, renderer, and batch size.
+`getDefinition(digestName)` returns the configured definition after validating its required fields. The result includes the canonical name, schedule, email channel, policy, renderer, and optional selection callback.
 
-**Throws:** `Megaphone.Digests.MissingDefinition` for an unknown or invalid name, or `Megaphone.Digests.InvalidDefinition` for missing configuration or an invalid batch size.
+**Throws:** `Megaphone.Digests.MissingDefinition` for an unknown or invalid name, or `Megaphone.Digests.InvalidDefinition` for missing configuration.
 
 ### getSubscription
 
 `getSubscription(notifiable, digestName)` loads the named subscription owned by the Notifiable.
 
-**Return:** A subscription struct, or null when none exists. Fields include `id`, `digestName`, `notifiableType`, `notifiableId`, `mode`, `generation`, `timezone`, `schedule`, `effectiveAt`, and `nextDueAt`. Boundary timestamps use UTC epoch milliseconds. An absent subscription is off.
+**Return:** A subscription struct, or null when none exists. Fields include `id`, `digestName`, `notifiableType`, `notifiableId`, `mode`, `generation`, `timezone`, `schedule`, `effectiveAt`, and `lastCutoffAt`. Boundary timestamps use UTC epoch milliseconds. An absent subscription is off.
 
 ### setSubscription
 
@@ -23,8 +23,8 @@ Stores a named delivery mode and prospective schedule.
 | `notifiable` | `INotifiable` | true | | The subscription owner. |
 | `digestName` | `string` | true | | A configured named digest. |
 | `mode` | `string` | true | | `off`, `immediate`, or `digest`. |
-| `timezone` | `string` | false | `UTC` | The confirmed IANA timezone; an empty value also uses UTC. |
-| `schedule` | `struct` | false | Definition schedule | `cadence` and `time`, plus `weekday` for weekly schedules. |
+| `timezone` | `string` | false | Definition/module scheduler | The confirmed Java timezone identifier, validated by the native scheduler. |
+| `schedule` | `string`, `struct`, or unstarted task instance | false | Named definition reference | A native frequency shortcut or `{cadence, arguments}` override. Executable closures belong in the named definition; a callback-free task instance can be persisted as an override. |
 | `clock` | `date` | false | `now()` | The effective change time. |
 
 **Return:** The stored subscription struct. Identical choices keep its generation and collected items. A changed mode, timezone, or schedule suppresses obsolete work and begins a new generation. Changing to Immediate does not send previously collected items; Notifications use the ordinary email channel for future immediate email.
@@ -50,19 +50,36 @@ Stores one logical item or its suppression identity without sending mail.
 | `eventId` | `string` | false | `""` | The saved publication event, used by `queuePlan()` to retain admission links. |
 | `clock` | `date` | false | `now()` | Admission time; controls cutoff membership. |
 
-**Return:** `{id, status, created}`. `status` describes collection (`collected`, `batched`, or `suppressed`), and `created` says whether a new item was inserted. Repeating the same identity returns the existing item without re-enabling it. Different content or occurrence under that key throws `Megaphone.Digests.IdentityConflict`.
+**Return:** `{id, status, created}`. `status` describes collection (`collected`, `batched`, `discarded`, or `suppressed`), and `created` says whether a new item was inserted. Repeating the same identity returns the existing item without re-enabling it. Different content or occurrence under that key throws `Megaphone.Digests.IdentityConflict`.
 
 Most Notifications collect through `toEmailDigest()` and `notify()` or `queuePlan()`. Use the direct operation when an application already owns domain publication. Publication replay exposes its original admissions through `NotificationPublication.getCollections()`.
 
-### prepareDue
+### prepareDigest
 
-`prepareDue(limit=100, clock=now())` freezes due subscriptions and persists one durable email delivery for each nonempty batch. The limit accepts integers from 1 to 1000. This operation performs no Provider I/O.
+`prepareDigest(digestName, cutoff, timezone, schedule, limit=100)` freezes candidates for one scheduled boundary and persists one durable email delivery per nonempty batch. `cutoff` is integer UTC epoch milliseconds; omitted timezone/schedule use named defaults. The recipient limit accepts integers from 1 to 1000. This operation performs no Provider I/O. The native module scheduler calls it automatically and drains the group in bounded transactions.
 
-**Return:** An array of batch structs. Fields include `id`, `subscriptionId`, `generation`, `cutoffAt`, `state`, and `deliveryId`. Empty batches have no `deliveryId`. Dispatch nonempty batch delivery IDs after commit through `NotificationDeliveryService` or your configured queue.
+**Return:** An array of batch structs with `id`, `subscriptionId`, `generation`, `cutoffAt`, `state`, and `deliveryId`. Empty batches have no delivery ID. Dispatch after commit. Unselected pre-cutoff items are discarded permanently. A repeated cutoff creates no additional batch. Digest/event/delivery stores must share the same datasource or `Megaphone.Digests.CrossDatasource` is thrown.
+
+### registerDigest
+
+`registerDigest(digestName, definition)` adds a definition and registers its native task on the existing `cbScheduler@megaphone`, starting it when that scheduler is already running. Definitions accept shortcut strings, `{cadence, arguments}`, configuration closures, or unstarted native task templates. Duplicate names throw `Megaphone.Digests.DuplicateDefinition`.
+
+**Return:** The validated definition. Runtime definitions remain application configuration; register them on every node and again on restart.
+
+### itemKey and occurredAt
+
+`itemKey(parts)` returns a 64-character SHA-256 identity from an ordered array of stable JSON-safe domain identity parts. `occurredAt(occurrence)` converts a saved date to integer UTC epoch milliseconds.
+
+```cfml
+"itemKey": digests.itemKey( [ "product.updated", savedEvent.getId(), 1 ] ),
+"occurredAt": digests.occurredAt( savedEvent.getOccurredDate() )
+```
+
+Reuse the same identity and original event date on retry.
 
 ### dispatchDue
 
-`dispatchDue(limit=100, clock=now())` also recovers expired digest worker leases and dispatches due digest mail. It leaves unrelated channels alone and uses the existing bounded transport attempts and acceptance tracking.
+`dispatchDue(limit=100, clock=now())` recovers expired digest worker leases and dispatches pending digest mail. It does not create batches. It leaves unrelated channels alone and uses the existing bounded transport attempts and acceptance tracking.
 
 **Return:** An array of `{deliveryId, result}` structs. `result` is a `DeliveryResult`; inspect `getStatus()` and `getReason()` to distinguish Provider acceptance, suppression, retry, permanent rejection, and ambiguity. The email is dispatched after preparation commits, so invoke this operation outside an application transaction.
 
@@ -80,4 +97,4 @@ Most Notifications collect through `toEmailDigest()` and `notify()` or `queuePla
 
 `IEmailDigestPolicy` describes the boolean `canCollect`, `canSend`, and `isEligible` checks. `IEmailDigestRenderer.render(notifiable, definition, batch, items)` returns a `BaseNotification` with `toEmail()` content. Implementing the interfaces is optional; the configured components must provide the methods. See [Named Email Digests](../guides/email-digests.md#supplying-consent-and-eligibility) for their responsibilities.
 
-Transport-start guards and collaborator resolution are internal Provider integration methods. Application schedulers use `prepareDue()` or `dispatchDue()`.
+Transport-start guards and collaborator resolution are internal Provider integration methods. The module scheduler owns normal preparation and dispatch. `useScheduler()` and `refreshSchedules()` support module lifecycle integration.
