@@ -334,6 +334,6 @@ If you prefer a scheduled polling worker, explicitly set `queue.queueAdapter` to
 
 ### Collecting a digest
 
-An [EmailDigestProvider](../providers/emaildigestprovider.md) channel collects a Notification instead of starting mail transport. `plan()` captures its item, and `queuePlan()` persists that collection in the publication transaction. The publication's `getCollections()` admissions are separate from `getDeliveries()`; collection never means Provider acceptance.
+An [EmailDigestProvider](../providers/emaildigestprovider.md) channel first admits the Notification into collection. Scheduled subscriptions wait for a cutoff; immediate subscriptions freeze a one-item batch for the same digest renderer. `plan()` captures its item, and `queuePlan()` persists that collection in the publication transaction. The publication's `getCollections()` admissions are separate from `getDeliveries()`; collection never means Provider acceptance.
 
 Use [Named Email Digests](email-digests.md) to configure independent subscriptions, consent and eligibility, rendering, and the due scheduler. Its nonempty batches create ordinary durable email deliveries that use the same claims, attempts, and receipt reconciliation described here.

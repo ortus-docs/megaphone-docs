@@ -129,4 +129,4 @@ var route = routeNotificationFor(
 
 ### Collection Providers
 
-`INotificationCollectionProvider` describes the optional `supportsCollection()`, `getCollectionIntent(notifiable, notification)`, and `collectPlanned(event, intent)` methods used by [EmailDigestProvider](emaildigestprovider.md). Planning captures collection data without writing it; publication admits it transactionally instead of creating a transport delivery. Collection returns an admission result and does not claim that a Provider accepted mail.
+`INotificationCollectionProvider` describes the optional `supportsCollection()`, `getCollectionIntent(notifiable, notification)`, and `collectPlanned(event, intent)` methods used by [EmailDigestProvider](emaildigestprovider.md). Planning captures collection data without writing it; publication admits it transactionally. Scheduled collection waits for a cutoff; immediate collection can return a one-item `deliveryId` for publication to enqueue. Collection returns an admission result and does not claim that a Provider accepted mail.

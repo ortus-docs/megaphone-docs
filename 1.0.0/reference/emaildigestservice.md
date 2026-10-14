@@ -27,7 +27,7 @@ Stores a named delivery mode and prospective schedule.
 | `schedule` | `string`, `struct`, or unstarted task instance | false | Named definition reference | A native frequency shortcut or `{cadence, arguments}` override. Executable closures belong in the named definition; a callback-free task instance can be persisted as an override. |
 | `clock` | `date` | false | `now()` | The effective change time. |
 
-**Return:** The stored subscription struct. Identical choices keep its generation and collected items. A changed mode, timezone, or schedule suppresses obsolete work and begins a new generation. Changing to Immediate does not send previously collected items; Notifications use the ordinary email channel for future immediate email.
+**Return:** The stored subscription struct. Identical choices keep its generation and collected items. A changed mode, timezone, or schedule suppresses obsolete work and begins a new generation. Changing to Immediate does not send previously collected items. Future items published through `emailDigest` become one-item batches using the named digest renderer. A definition without `schedule` supports immediate subscriptions; scheduled mode requires a configured schedule or explicit override.
 
 ### unsubscribe
 
@@ -37,7 +37,7 @@ Stores a named delivery mode and prospective schedule.
 
 ### collect
 
-Stores one logical item or its suppression identity without sending mail.
+Stores one logical item or its suppression identity without Provider I/O. Immediate mode also freezes that new item and creates its durable batch delivery in the same transaction.
 
 | Name | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
@@ -50,7 +50,7 @@ Stores one logical item or its suppression identity without sending mail.
 | `eventId` | `string` | false | `""` | The saved publication event, used by `queuePlan()` to retain admission links. |
 | `clock` | `date` | false | `now()` | Admission time; controls cutoff membership. |
 
-**Return:** `{id, status, created}`. `status` describes collection (`collected`, `batched`, `discarded`, or `suppressed`), and `created` says whether a new item was inserted. Repeating the same identity returns the existing item without re-enabling it. Different content or occurrence under that key throws `Megaphone.Digests.IdentityConflict`.
+**Return:** `{id, status, created}`, plus `batchId` and `deliveryId` for a nonempty immediate batch. `status` describes collection (`collected`, `batched`, `discarded`, or `suppressed`), and `created` says whether a new item was inserted. Repeating the same identity returns the existing item without re-enabling it. Different content or occurrence under that key throws `Megaphone.Digests.IdentityConflict`.
 
 Most Notifications collect through `toEmailDigest()` and `notify()` or `queuePlan()`. Use the direct operation when an application already owns domain publication. Publication replay exposes its original admissions through `NotificationPublication.getCollections()`.
 
@@ -62,7 +62,7 @@ Most Notifications collect through `toEmailDigest()` and `notify()` or `queuePla
 
 ### registerDigest
 
-`registerDigest(digestName, definition)` adds a definition and registers its native task on the existing `cbScheduler@megaphone`, starting it when that scheduler is already running. Definitions accept shortcut strings, `{cadence, arguments}`, configuration closures, or unstarted native task templates. Duplicate names throw `Megaphone.Digests.DuplicateDefinition`.
+`registerDigest(digestName, definition)` adds a definition and registers its native task on the existing `cbScheduler@megaphone`, starting it when that scheduler is already running. Definitions with a schedule accept shortcut strings, `{cadence, arguments}`, configuration closures, or unstarted native task templates. Immediate-only definitions omit the schedule and create no calendar task. Duplicate names throw `Megaphone.Digests.DuplicateDefinition`.
 
 **Return:** The validated definition. Runtime definitions remain application configuration; register them on every node and again on restart.
 

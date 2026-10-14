@@ -10,7 +10,7 @@ Returns `"EmailDigestProvider"`, independently of the configured channel name.
 
 `notify(notifiable, notification)` calls the Notification's `toEmailDigest()` method and collects its item using `EmailDigestService`.
 
-**Return:** The populated `BaseNotification`. Collection is synchronous in the caller's transaction; no mail delivery occurs.
+**Return:** The populated `BaseNotification`. Scheduled mode collects synchronously without sending mail. Immediate mode freezes a one-item batch and dispatches it through the configured digest renderer and durable email transport.
 
 ### supportsCollection
 
@@ -26,6 +26,6 @@ Returns `true`. `NotificationService.plan()` captures a collection intent instea
 
 `collectPlanned(event, intent)` admits one captured item in the publication transaction. It resolves the current Notifiable using `queue.notifiableResolver`, checks the captured recipient identity, and applies the saved channel choice and current subscription/consent policy.
 
-**Return:** A collection admission struct with `id`, `status`, and `created`. `NotificationPublication.getCollections()` exposes these results separately from actual delivery intents.
+**Return:** A collection admission struct with `id`, `status`, and `created`, plus `batchId` and `deliveryId` for a nonempty immediate batch. `NotificationPublication.getCollections()` exposes these results separately from actual delivery intents.
 
 These collection methods are described by `INotificationCollectionProvider`. They are called by `NotificationService`; applications normally use `notify()`, `queue()`, or `queuePlan()`.

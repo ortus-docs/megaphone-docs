@@ -1,6 +1,6 @@
 # Named Email Digests
 
-A named digest lets a Notifiable receive a summary on its own schedule. Notifications collect through [EmailDigestProvider](../providers/emaildigestprovider.md). The module's ColdBox scheduler freezes the selected items and sends one email through your configured email channel.
+A named digest lets a Notifiable receive a scheduled summary or an immediate one-item email. Notifications use [EmailDigestProvider](../providers/emaildigestprovider.md) in either case. The same policy, renderer, and receipt-aware email channel handle both timings.
 
 Each digest has its own subscription, calendar schedule, and timezone. The application decides what the digest contains and whether each item is still eligible when the email is prepared.
 
@@ -58,7 +58,7 @@ digests.setSubscription(
 
 Use `off`, `immediate`, or `digest`. `timezone` uses the same Java timezone identifiers and validation as ColdBox `setTimezone()`. When omitted it inherits the definition's timezone, then the module scheduler's timezone. Pass a shortcut `schedule` to override the named default for this subscription. The example explicitly falls back to UTC for an account with no confirmed timezone.
 
-Have the Notification choose its channel from that named subscription:
+The Notification needs only one route. Megaphone reads the named subscription to choose scheduled collection, an immediate one-item batch, or suppression:
 
 ```cfml
 component extends="megaphone.models.BaseNotification" accessors="true" {
@@ -68,11 +68,7 @@ component extends="megaphone.models.BaseNotification" accessors="true" {
     property name="updateOccurredAt";
 
     public array function via( required any notifiable ) {
-        var subscription = variables.digests.getSubscription( arguments.notifiable, "productUpdates" );
-        if ( isNull( subscription ) || subscription.mode == "off" ) {
-            return [];
-        }
-        return [ subscription.mode == "digest" ? "emailDigest" : "email" ];
+        return [ "emailDigest" ];
     }
 
     public struct function toEmailDigest( required any notifiable ) {
@@ -84,25 +80,76 @@ component extends="megaphone.models.BaseNotification" accessors="true" {
         };
     }
 
-    public any function toEmail( required any notifiable, required any newMail ) {
-        return arguments.newMail(
-            to = arguments.notifiable.routeNotificationForEmail(),
-            from = "updates@example.com",
-            subject = "A product was updated",
-            type = "text",
-            body = "Product " & variables.productId & " has an update."
-        );
+}
+```
+
+Call `notify()`, `queue()`, or `queuePlan()` as usual. `plan()` captures the item without writing or sending. In `digest` mode, publication collects it for the next native schedule and creates no mail job yet. In `immediate` mode, publication freezes just that new item and creates a durable email delivery immediately, without waiting for a calendar cutoff. `queuePlan()` enqueues that delivery through the configured queue adapter. Synchronous `notify()` dispatches it through the same digest renderer; call synchronous sends after domain transactions commit.
+
+The source Notification does not need `toEmail()` or a separate immediate-email route. The Notification returned by the digest renderer supplies `toEmail()` for both one-item and multi-item batches. The `email` channel remains the underlying receipt-aware transport selected by the definition's `emailChannel`.
+
+A repeated identical subscription update keeps pending items. Changing mode, timezone, or schedule starts a new generation and suppresses obsolete collected work. Returning to Digest does not replay it. Call `setSubscription()` transactionally when the application changes that preference or confirmed timezone. Subscriptions using the named default resolve it again after application reload; explicit shortcut overrides remain independent. Treat a change to configured schedules as an application reload. Use `registerDigest()` to add a new name at runtime.
+
+### An immediate-only digest policy
+
+An application that wants the digest renderer for every individual item does not need to support scheduled Digest as another user choice. Omit the calendar schedule, use an immediate subscription, and keep `via()` returning only `[ "emailDigest" ]`:
+
+```cfml
+moduleSettings.megaphone.digests.productUpdates = {
+    "emailChannel": "email",
+    "policy": "ImmediateProductDigestPolicy",
+    "renderer": "ProductDigestRenderer"
+};
+
+digests.setSubscription(
+    notifiable = user,
+    digestName = "productUpdates",
+    mode = "immediate"
+);
+```
+
+For this product, the preference UI can simply expose On/Off: On stores `immediate` and Off calls `unsubscribe()`. No calendar schedule, second delivery mode in the UI, second email Notification, or separate immediate renderer is needed. The module's existing delivery maintenance task still recovers pending work, and queue workers process immediate deliveries without a calendar wait.
+
+`ImmediateProductDigestPolicy` can explicitly allow only immediate subscriptions:
+
+```cfml
+component {
+    property name="consent" inject="ConsentService";
+    property name="catalog" inject="ProductService";
+
+    public boolean function canCollect( required any notifiable, required struct definition, required struct item ) {
+        return allowsEmail( arguments.notifiable, arguments.definition ) &&
+            isEligible( arguments.notifiable, arguments.definition, arguments.item );
+    }
+
+    public boolean function canSend( required any notifiable, required struct definition, required struct subscription ) {
+        return arguments.subscription.mode == "immediate" &&
+            allowsEmail( arguments.notifiable, arguments.definition );
+    }
+
+    public boolean function isEligible( required any notifiable, required struct definition, required struct item ) {
+        return variables.catalog.isVisibleTo( arguments.item.data.productId, arguments.notifiable.getNotifiableId() );
+    }
+
+    private boolean function allowsEmail( required any notifiable, required struct definition ) {
+        return variables.consent.allowsEmail( arguments.notifiable.getNotifiableId() ) &&
+            variables.consent.allowsDigest( arguments.notifiable.getNotifiableId(), arguments.definition.name );
     }
 }
 ```
 
-Call `notify()`, `queue()`, or `queuePlan()` as usual. `plan()` only captures the collection intent; publication stores the collection in the caller's transaction. The default cbq adapter is not invoked for collection-only work, since no mail delivery job exists yet.
+The `immediate` subscription sets the timing; this policy authorizes collection and sending. These are example application services, not built-in Megaphone components. If the same consent rules apply to both timings, reuse `ProductDigestPolicy` instead of adding a separate policy class. The same `ProductDigestRenderer` receives an `items` array containing one item and a batch with `mode="immediate"`.
 
-A repeated identical subscription update keeps pending items. Changing mode, timezone, or schedule starts a new generation and suppresses obsolete collected work. Returning to Digest does not replay it. Call `setSubscription()` transactionally when the application changes that preference or confirmed timezone. Subscriptions using the named default resolve it again after application reload; explicit shortcut overrides remain independent. Treat a change to configured schedules as an application reload. Use `registerDigest()` to add a new name at runtime.
+Immediate items retain their stable item, batch, and delivery identities. A replay cannot create a second email. Selection may discard the item, and consent, mode, generation, and eligibility are checked again before transport. Retryable or ambiguous outcomes use the existing durable delivery rules; Immediate does not bypass them. Changing to Immediate does not send previously accumulated scheduled items.
+
+### When to offer both timings
+
+Offer Immediate and Scheduled Digest as mutually exclusive choices when recipients want either each update as it happens or a daily/weekly summary. A subscription has one mode, so the same event is not automatically sent through both paths. Different products can also use different timings, such as immediate announcements and weekly product summaries.
+
+For one notification and recipient, sending both an immediate email and a later digest usually repeats content. Support that only when the summary has a distinct purpose and the user explicitly chooses both products. Ordinary transactional email remains a separate channel for notifications that do not belong in a digest.
 
 ### Scheduling with ColdBox
 
-Megaphone provides `config/Scheduler.cfc`, registered by ColdBox as `cbScheduler@megaphone`. It registers one native task for each digest/schedule/timezone combination, rather than one thread per subscriber. The task freezes one scheduled cutoff and dispatches its durable mail deliveries. A separate task checks pending deliveries and restores newly persisted schedule variants every minute.
+Megaphone provides `config/Scheduler.cfc`, registered by ColdBox as `cbScheduler@megaphone`. For scheduled subscriptions it registers one native task for each digest/schedule/timezone combination, rather than one thread per subscriber. The task freezes one scheduled cutoff and dispatches its durable mail deliveries. A separate task checks pending deliveries and restores newly persisted schedule variants every minute.
 
 Use the exact ColdBox frequency names:
 
@@ -142,7 +189,7 @@ digests.registerDigest( "weeklyAnnouncements", {
 } );
 ```
 
-It registers and starts its task on the existing module scheduler. Adding or changing a subscription also registers its schedule/timezone variant locally; the minute task discovers variants created on another node. Database locks and durable delivery leases coordinate workers. Digest definitions are application configuration, so `registerDigest()` rejects duplicate names rather than silently replacing a running schedule.
+A definition with a schedule registers and starts its task on the existing module scheduler. An immediate-only definition omits the schedule and needs no calendar task. Adding or changing a subscription also registers its schedule/timezone variant locally; the minute task discovers variants created on another node. Database locks and durable delivery leases coordinate workers. Digest definitions are application configuration, so `registerDigest()` rejects duplicate names rather than silently replacing a running schedule.
 
 ### Stable item identities and occurrence times
 
@@ -233,7 +280,7 @@ Consent, subscription generation, and item eligibility are checked again after r
 
 ### Choosing the items
 
-Selection happens once while freezing a cutoff, after current consent and item eligibility checks. The default keeps all eligible candidates in descending `occurredAt` order, then item-key order. Configure `selectItems` as a closure or a WireBox component with `selectItems(notifiable, definition, items)`:
+Selection happens once while freezing a scheduled cutoff or a new immediate item, after current consent and item eligibility checks. The default keeps all eligible candidates in descending `occurredAt` order, then item-key order. Configure `selectItems` as a closure or a WireBox component with `selectItems(notifiable, definition, items)`:
 
 ```cfml
 "selectItems": ( notifiable, definition, items ) => items.isEmpty() ? [] : items.slice( 1, min( 10, items.len() ) )
@@ -253,7 +300,7 @@ The scheduler drains each group in bounded transactions. The subscription row lo
 
 ### Inspecting collection and email
 
-`NotificationPublication.getCollections()` returns `{id, status, created}` admission results. An item can be `collected`, `batched`, `discarded`, or `suppressed`; these states do not mean an email was sent. Event admission links let overlapping events refer to one item and let either event replay return its original collection identity.
+`NotificationPublication.getCollections()` returns `{id, status, created}` admission results. An item can be `collected`, `batched`, `discarded`, or `suppressed`; these states do not mean an email was sent. Immediate admissions also expose `batchId` and `deliveryId` when a nonempty one-item batch is created. Its publication includes that delivery in `getDeliveries()` and can enqueue it without waiting for the schedule. Event admission links let overlapping events refer to one item and let either event replay return its original collection identity.
 
 A nonempty batch has a separate durable email delivery. Inspect its Provider outcome and attempts using `NotificationDeliveryService.getDelivery(batch.deliveryId)` and `getAttempts(batch.deliveryId)`. Batch state describes frozen membership; email acceptance is recorded on the delivery.
 
@@ -277,4 +324,4 @@ Keep stable item identities when pruning old content. Deleting collection identi
 
 The digest, event, and delivery stores must resolve to the same datasource. Freezing items, recording the batch, creating the durable email event/delivery, and attaching that delivery all commit in one transaction. A different datasource cannot preserve this guarantee with the current design and is rejected before batch creation. Separate databases would need an outbox transfer and idempotent reconciliation, not a second datasource option alone.
 
-Immediate mode uses the original notification's ordinary `toEmail()` through the ordinary email channel selected by `via()`. The named digest renderer runs only for scheduled digest batches. Setting a subscription to `immediate` does not itself route or send mail, and an `emailDigest` collection channel suppresses an immediate subscription. It does not automatically produce a one-item digest.
+Setting a subscription to `immediate` affects future items only. Publishing a future item through `emailDigest` creates a one-item batch rendered by the named digest renderer, rather than routing the source Notification through ordinary `toEmail()`.

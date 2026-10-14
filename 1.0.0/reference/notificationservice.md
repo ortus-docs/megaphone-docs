@@ -78,6 +78,6 @@ Queueing a saved plan keeps its original audience, payload, times, and hashes. I
 
 ### Collection channels
 
-An [EmailDigestProvider](../providers/emaildigestprovider.md) channel uses the same `notify()`, `plan()`, `queue()`, and `queuePlan()` entry points. Planning captures the item; publication collects it transactionally. Collection-only publication does not enqueue a mail job. A due digest later creates its own durable email delivery.
+An [EmailDigestProvider](../providers/emaildigestprovider.md) channel uses the same `notify()`, `plan()`, `queue()`, and `queuePlan()` entry points. Planning captures the item; publication collects it transactionally. Scheduled collection does not enqueue a mail job; a due digest later creates its own durable email delivery. Immediate collection freezes one item and creates a delivery for publication to enqueue. It uses the same digest renderer and needs no separate ordinary-email route.
 
-A saved plan retains its collection capability. Changing that channel to a transport Provider before publication throws `Megaphone.Digests.CollectionChannelChanged`, so saved content cannot silently become an immediate email. Event replay returns its saved collection admissions, even when a later plan offers fewer channels.
+A saved plan retains its collection capability. Changing that channel to a transport Provider before publication throws `Megaphone.Digests.CollectionChannelChanged`, so saved collection content cannot silently switch to an unrelated transport Provider. Event replay returns its saved collection admissions, even when a later plan offers fewer channels.

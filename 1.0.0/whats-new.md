@@ -2,7 +2,7 @@
 
 ### 1.2.0
 
-Want to send a summary instead of a separate email for every Notification? [EmailDigestProvider](providers/emaildigestprovider.md) collects content for named digests. The module's ColdBox scheduler sends the summaries on each subscription's schedule. A Notifiable can subscribe to product updates and organization news independently.
+Want to send a summary instead of a separate email for every Notification? [EmailDigestProvider](providers/emaildigestprovider.md) collects content for named digests. The module's ColdBox scheduler sends the summaries on each subscription's schedule. A Notifiable can subscribe to product updates and organization news independently. Immediate subscriptions use the same digest renderer with one item, so a product needs only the `emailDigest` route. Immediate-only definitions can omit their calendar schedule.
 
 Your Notifications still choose channels through `via()`. Immediate email uses the ordinary email channel; Digest collects through `toEmailDigest()`. `notify()` and `queuePlan()` retain those conventions, and `NotificationPublication.getCollections()` keeps collection separate from actual email delivery.
 
