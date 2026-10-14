@@ -126,3 +126,7 @@ var route = routeNotificationFor(
     optional = true
 );
 ```
+
+### Collection Providers
+
+`INotificationCollectionProvider` describes the optional `supportsCollection()`, `getCollectionIntent(notifiable, notification)`, and `collectPlanned(event, intent)` methods used by [EmailDigestProvider](emaildigestprovider.md). Planning captures collection data without writing it; publication admits it transactionally instead of creating a transport delivery. Collection returns an admission result and does not claim that a Provider accepted mail.

@@ -1,5 +1,17 @@
 # What's New?
 
+### 1.2.0
+
+Want to send a summary instead of a separate email for every Notification? [EmailDigestProvider](providers/emaildigestprovider.md) collects content for named digests. `EmailDigestService` sends the summaries on each subscription's schedule. A Notifiable can subscribe to product updates and organization news independently.
+
+Your Notifications still choose channels through `via()`. Immediate email uses the ordinary email channel; Digest collects through `toEmailDigest()`. `notify()` and `queuePlan()` retain those conventions, and `NotificationPublication.getCollections()` keeps collection separate from actual email delivery.
+
+[Named Email Digests](guides/email-digests.md) covers local-time schedules, consent and item eligibility, rendering summaries, scheduler calls, and unsubscribe links for one digest. `EmailDigestService` freezes stable batches and reuses Megaphone's existing receipt-aware email delivery, retry, and recovery APIs. Preference changes apply prospectively without replaying old collected items.
+
+[Delivery Operations](guides/delivery-operations.md#reconciling-a-confirmed-rejection) also adds `reconcileNotAccepted()`. Use authoritative rejection evidence to release an ambiguous delivery for another bounded attempt, while keeping its transport counts. Unknown outcomes continue to require reconciliation rather than an automatic resend.
+
+Apply the additive digest migration and configure `digests` and `storage.digests` before using collection. Existing synchronous Notifications and ordinary immediate email channels continue to work.
+
 ### 1.1.0
 
 You can now queue a Notification using the same conventions as `notify()`. Pass a Notifiable, a Notification instance or WireBox name, and its properties. Megaphone saves the delivery decisions so a worker can send it later.

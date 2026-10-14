@@ -47,3 +47,7 @@ Like cbmailservices and cbfs, Megaphone creates channels to send `Notification` 
 </code></pre>
 
 Each Provider defines the required and optional `properties` it accepts.  Refer to the individual Provider documentation for more information.
+
+### Named email digests
+
+[EmailDigestProvider](../providers/emaildigestprovider.md) is a collection channel. Configure its named definitions under `digests` and its persistence settings under `storage.digests`. Each definition selects an ordinary receipt-aware email channel for its eventual summary. See [Named Email Digests](../guides/email-digests.md#configuring-a-digest) for the complete configuration.

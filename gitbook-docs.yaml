@@ -4,7 +4,7 @@ site:
   structure:
     - type: space
       key: space-1
-      title: v1.1.0
+      title: v1.2.0
       path: 1.0.0
       default: true
       content:

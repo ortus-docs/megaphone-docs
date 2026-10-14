@@ -51,3 +51,9 @@ component accessors="true" {
 
 }
 ```
+
+### Sending a digest
+
+[EmailDigestProvider](emaildigestprovider.md) collects named digest items. The due dispatcher sends the rendered summary through a configured email channel. Set that channel's `properties.durableAdapter` to your receipt-aware adapter; synchronous cbMailServices success callbacks do not establish durable acceptance.
+
+The adapter uses the existing `prepareDelivery(notifiable, notification, delivery)` and `sendDelivery(prepared, delivery)` contract described in [Durable Delivery](../guides/durable-delivery.md). Immediate email continues to use this Provider and `toEmail()` normally.
