@@ -8,6 +8,17 @@ Use Megaphone's JDK 11+ baseline for the bundled transport. Megaphone declares t
 
 The SDK uses the JDK's HTTP client and needs no additional Java libraries or fat JAR. Megaphone verifies its checksum and loads it when you use Web Push; other channels don't require push configuration.
 
+On Adobe ColdFusion, add the installed SDK folder to your application's Java classpath in `Application.cfc`, alongside any existing `loadPaths`:
+
+```js
+this.javaSettings = {
+    "loadPaths": [ "./modules/megaphone/resources/java/webpush" ],
+    "loadColdFusionClassPath": true
+};
+```
+
+Adjust the path if your application installs modules elsewhere. Megaphone still verifies the SDK checksum before using it.
+
 ### Configuration
 
 Megaphone includes a default `WebPushRuntime`. It supplies the subscription cipher, recipient context, browser enrollment public key, and Java transport. You don't need to create an `ApplicationPushRuntime` component.
