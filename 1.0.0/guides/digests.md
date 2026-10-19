@@ -118,7 +118,7 @@ component extends="megaphone.models.BaseNotification" accessors="true" {
         return arguments.notifiable.getAuditionDeliveryChannels();
     }
 
-    public Mail function toEmail( required any notifiable, required any newMail ) {
+    public any function toEmail( required any notifiable, required any newMail ) {
         return arguments
             .newMail(
                 to = arguments.notifiable.getEmail(),

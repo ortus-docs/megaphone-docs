@@ -367,7 +367,7 @@ var publications = notificationService.queuePlans(
 
 `planMany()` returns one `NotificationPlan` per request without writing or sending. `queuePlans()` returns the corresponding `NotificationPublication` objects in the same order. A failure rolls back the whole batch and its caller's transaction. Queue insertion must use the same transactional datasource when you need queue writes to roll back with publication.
 
-Replaying an event keeps its original audience, suppression choices, and delivery state. It does not add recipients or enqueue the same work again. Digest collection uses the existing publication path within the shared transaction so admission history and replay rules stay intact.
+Replaying an event keeps its original audience, suppression choices, and delivery state. It does not add recipients or enqueue the same work again. Plans involving collections, and applications with named digests configured, keep the existing publication path within the shared transaction so admission history and replay rules stay intact.
 
 If you do not need publication results, use `admitPlans(plans, ...)`. If you do not need saved plans either, `admitRequests(requests, ...)` accepts the request array directly. Both return void. Their optimized path requires a queue adapter with `enqueueReferencesMany()`; existing adapters and digest plans retain the normal mapped-model path. See the [NotificationService reference](../reference/notificationservice.md#planmany) for the arguments.
 

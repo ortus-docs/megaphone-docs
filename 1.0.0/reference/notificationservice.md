@@ -92,7 +92,7 @@ Queueing a saved plan keeps its original audience, payload, times, and hashes. I
 
 `admitPlans(plans, alreadyAdmitted=false, connection?, queue?)` saves and enqueues plans without returning publication objects. `admitRequests(requests, alreadyAdmitted=false, connection?, queue?)` accepts the same request structs as `planMany()` without returning plans or publications.
 
-**Return:** Void. The optimized path requires a queue adapter implementing `enqueueReferencesMany(references, connection?, queue?)`; each reference contains `id`, `state`, and `availableDate`. Unsupported adapters and digest collections use the existing mapped-model path before writing. Identity conflicts, cutoffs, and transaction rollback still apply.
+**Return:** Void. The optimized path requires a queue adapter implementing `enqueueReferencesMany(references, connection?, queue?)`; each reference contains `id`, `state`, and `availableDate`. Unsupported adapters, collection plans, and applications with named digests configured use the existing mapped-model path before writing. Identity conflicts, cutoffs, and transaction rollback still apply.
 
 These batch methods were added in 1.3.0. See [Queueing Several Notifications](../guides/durable-delivery.md#queueing-several-notifications) for an example and optional queue adapter methods.
 
