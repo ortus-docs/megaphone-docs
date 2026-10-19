@@ -1,5 +1,7 @@
 # Named Email Digests
 
+For the provider-independent API added in 1.3.0, see [Digests](digests.md). This page documents the compatible 1.2.0 email channel and renderer API.
+
 A named digest lets a Notifiable receive a scheduled summary or an immediate one-item email. Notifications use [EmailDigestProvider](../providers/emaildigestprovider.md) in either case. The same policy, renderer, and receipt-aware email channel handle both timings.
 
 Each digest has its own subscription, calendar schedule, and timezone. The application decides what the digest contains and whether each item is still eligible when the email is prepared.

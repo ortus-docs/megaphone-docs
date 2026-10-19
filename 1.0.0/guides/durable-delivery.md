@@ -337,3 +337,40 @@ If you prefer a scheduled polling worker, explicitly set `queue.queueAdapter` to
 An [EmailDigestProvider](../providers/emaildigestprovider.md) channel first admits the Notification into collection. Scheduled subscriptions wait for a cutoff; immediate subscriptions freeze a one-item batch for the same digest renderer. `plan()` captures its item, and `queuePlan()` persists that collection in the publication transaction. The publication's `getCollections()` admissions are separate from `getDeliveries()`; collection never means Provider acceptance.
 
 Use [Named Email Digests](email-digests.md) to configure independent subscriptions, consent and eligibility, rendering, and the due scheduler. Its nonempty batches create ordinary durable email deliveries that use the same claims, attempts, and receipt reconciliation described here.
+
+### Queueing several Notifications
+
+Megaphone 1.3.0 adds `planMany()` and `queuePlans()` for publishing several Notifications in one transaction. Each request uses the same arguments as `plan()`:
+
+```cfml
+var plans = notificationService.planMany( [
+    {
+        "notifiables": firstUser,
+        "notification": "ReceiptNotification",
+        "properties": { "receiptId": "one" },
+        "options": { "eventKey": "receipt-one" }
+    },
+    {
+        "notifiables": secondUser,
+        "notification": "ReceiptNotification",
+        "properties": { "receiptId": "two" },
+        "options": { "eventKey": "receipt-two" }
+    }
+] );
+
+var publications = notificationService.queuePlans(
+    plans = plans,
+    connection = "database",
+    queue = "notifications"
+);
+```
+
+`planMany()` returns one `NotificationPlan` per request without writing or sending. `queuePlans()` returns the corresponding `NotificationPublication` objects in the same order. A failure rolls back the whole batch and its caller's transaction. Queue insertion must use the same transactional datasource when you need queue writes to roll back with publication.
+
+Replaying an event keeps its original audience, suppression choices, and delivery state. It does not add recipients or enqueue the same work again. Digest collection uses the existing publication path within the shared transaction so admission history and replay rules stay intact.
+
+If you do not need publication results, use `admitPlans(plans, ...)`. If you do not need saved plans either, `admitRequests(requests, ...)` accepts the request array directly. Both return void. Their optimized path requires a queue adapter with `enqueueReferencesMany()`; existing adapters and digest plans retain the normal mapped-model path. See the [NotificationService reference](../reference/notificationservice.md#planmany) for the arguments.
+
+Custom queue adapters can implement `enqueueMany(deliveries, connection?, queue?)` to receive a batch of public `NotificationDelivery` objects. Adapters that only implement `enqueue()` continue to work. The bundled cbq adapter uses bulk dispatch for immediately available jobs and keeps delayed scheduling for future jobs. Batching depends on the configured cbq Provider and version.
+
+`enqueueReferencesMany(references, connection?, queue?)` is a separate opt-in for the void admission methods. Each reference contains `id`, `state`, and `availableDate`. The adapter must preserve its normal queue interception and delayed scheduling behavior.

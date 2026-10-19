@@ -83,3 +83,9 @@ Each Provider has their own requirements for their `to{ChannelType}` methods.  S
 ### Collecting for an email digest
 
 A Notification can select an [EmailDigestProvider](../providers/emaildigestprovider.md) channel and return its named digest, stable item key, persisted occurrence time, and JSON-safe data from `toEmailDigest()`. Use [Named Email Digests](../guides/email-digests.md#choosing-a-delivery-mode) when `via()` should choose Off, Immediate email, or Digest from a named subscription.
+
+### Collecting for a digest
+
+In Megaphone 1.3.0, a Notification can return one or more [DigestProvider](../providers/digestprovider.md) channels from `via()` and supply their item content through `toDigest()`. The configured Provider type chooses the formatter: channels named `dailyAuditions` and `weeklyAuditions` both call `toDigest()`. Each channel's `properties.digestName` selects the named collection.
+
+At the cutoff, Megaphone creates the configured summary Notification with the selected items. That Notification chooses ordinary delivery channels and supplies their formatters. See [Digests](../guides/digests.md) for the complete example.

@@ -23,6 +23,7 @@
 ## Providers
 
 * [DatabaseProvider](providers/databaseprovider.md)
+* [DigestProvider](providers/digestprovider.md)
 * [EmailProvider](providers/emailprovider.md)
 * [EmailDigestProvider](providers/emaildigestprovider.md)
 * [SlackProvider](providers/slackprovider/README.md)
@@ -38,6 +39,7 @@
 * [Event Identities](guides/event-identities.md)
 * [Durable Delivery](guides/durable-delivery.md)
 * [Delivery Operations](guides/delivery-operations.md)
+* [Digests](guides/digests.md)
 * [Named Email Digests](guides/email-digests.md)
 
 ## Testing
@@ -47,6 +49,7 @@
 ## Reference
 
 * [NotificationService](reference/notificationservice.md)
+* [DigestService](reference/digestservice.md)
 * [EmailDigestService](reference/emaildigestservice.md)
 * [BaseNotification](reference/basenotification.md)
 * [SendsNotifications](reference/sendsnotifications.md)
@@ -58,6 +61,7 @@
     * [DatabaseNotificationCursor](reference/baseprovider/databaseprovider/databasenotificationcursor.md)
     * [DatabaseNotificationKeysetCursor](reference/baseprovider/databaseprovider/databasenotificationkeysetcursor.md)
     * [DatabaseNotification](reference/baseprovider/databaseprovider/databasenotification.md)
+  * [DigestProvider](reference/baseprovider/digestprovider.md)
   * [EmailProvider](reference/baseprovider/emailprovider.md)
   * [EmailDigestProvider](reference/baseprovider/emaildigestprovider.md)
   * [SlackProvider](reference/baseprovider/slackprovider/README.md)

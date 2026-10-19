@@ -1,5 +1,7 @@
 # EmailDigestService
 
+Megaphone 1.3.0 also exposes [DigestService](digestservice.md) for provider-independent summaries and subscription lifecycle methods. The legacy methods below retain their existing pending-item behavior.
+
 `EmailDigestService@megaphone` manages named subscriptions, collected items, and scheduled email batches. See [Named Email Digests](../guides/email-digests.md) for configuration and consumer integration.
 
 ### getDefinition
