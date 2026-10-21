@@ -6,7 +6,7 @@ Want to save a Notification now and let a worker send it later? Megaphone includ
 
 cbq is an optional application dependency. Megaphone does not install it for you:
 
-```bash
+```js
 box install cbq
 ```
 
@@ -334,15 +334,21 @@ If you prefer a scheduled polling worker, explicitly set `queue.queueAdapter` to
 
 ### Collecting a digest
 
-An [EmailDigestProvider](../providers/emaildigestprovider.md) channel first admits the Notification into collection. Scheduled subscriptions wait for a cutoff; immediate subscriptions freeze a one-item batch for the same digest renderer. `plan()` captures its item, and `queuePlan()` persists that collection in the publication transaction. The publication's `getCollections()` admissions are separate from `getDeliveries()`; collection never means Provider acceptance.
+A [DigestProvider](../providers/digestprovider.md) channel first admits the Notification into a named collection using `toDigest()`. Scheduled subscriptions wait for a cutoff; immediate subscriptions create a one-item summary. `plan()` captures the item, and `queuePlan()` persists that collection in the publication transaction. The publication's `getCollections()` admissions are separate from `getDeliveries()`; collection never means Provider acceptance.
 
-Use [Named Email Digests](email-digests.md) to configure independent subscriptions, consent and eligibility, rendering, and the due scheduler. Its nonempty batches create ordinary durable email deliveries that use the same claims, attempts, and receipt reconciliation described here.
+At the cutoff, Megaphone publishes the configured summary Notification through normal durable routing. Its `via()` selects delivery channels, and each channel gets an independent delivery record and retry history. Repeating cutoff dispatch cannot publish a second summary for the batch. The summary cannot route back into a collection channel.
+
+Use [Digests](digests.md) to configure subscriptions, consent and eligibility, selection, summary Notifications, and the native ColdBox scheduler. Summary deliveries use the same claims, attempts, and receipt reconciliation described here.
+
+{% hint style="warning" %}
+[EmailDigestProvider](../providers/emaildigestprovider.md) is deprecated in Megaphone 1.3.0 in favor of [DigestProvider](../providers/digestprovider.md). Existing email-channel and renderer definitions remain supported. See [Named Email Digests](email-digests.md) for that legacy path.
+{% endhint %}
 
 ### Queueing several Notifications
 
 Megaphone 1.3.0 adds `planMany()` and `queuePlans()` for publishing several Notifications in one transaction. Each request uses the same arguments as `plan()`:
 
-```cfml
+```js
 var plans = notificationService.planMany( [
     {
         "notifiables": firstUser,

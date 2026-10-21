@@ -1,5 +1,9 @@
 # EmailDigestProvider
 
+{% hint style="warning" %}
+The email-specific digest API is deprecated in Megaphone 1.3.0. Use [DigestProvider](../providers/digestprovider.md) and [Digests](../guides/digests.md) instead. The new API collects items independently of delivery and publishes a summary Notification that can choose email, SMS, or other channels. The legacy API ties each digest to an email channel and renderer. Existing email digests remain supported for compatibility.
+{% endhint %}
+
 Want to send a weekly summary instead of an email for every Notification? The `EmailDigestProvider` collects content for a named digest. In scheduled mode the module scheduler sends them later; in immediate mode each new item becomes a one-item batch through the same renderer and [EmailProvider](emailprovider.md) channel.
 
 Each named digest has its own subscription and schedule for each Notifiable. A user can subscribe to product updates and organization news independently, or unsubscribe from one while continuing to receive the other.
@@ -14,7 +18,7 @@ Sending a batch requires an email channel with a receipt-aware durable adapter. 
 
 Register a collection channel as you would any other Provider:
 
-```cfml
+```js
 "emailDigest": {
     "provider": "EmailDigestProvider@megaphone",
     "properties": {}
@@ -23,7 +27,7 @@ Register a collection channel as you would any other Provider:
 
 Define the named digests under `moduleSettings.megaphone.digests`. The schedule belongs to a definition and can be overridden for an individual subscription:
 
-```cfml
+```js
 "digests": {
     "productUpdates": {
         "schedule": "everyWeekOn 1 09:00",
@@ -40,7 +44,7 @@ Define the named digests under `moduleSettings.megaphone.digests`. The schedule 
 
 Return a struct identifying the digest and the logical item to collect:
 
-```cfml
+```js
 public struct function toEmailDigest( required any notifiable ) {
     return {
         "digestName": "productUpdates",

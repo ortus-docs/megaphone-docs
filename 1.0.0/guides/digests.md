@@ -5,14 +5,14 @@ A digest collects notification items and decides when to send a summary. The sum
 For example, CommuniArts can offer daily and weekly audition updates. One user might receive the daily summary by email. Another might receive the weekly summary by SMS. A user can also choose both delivery channels without collecting the same items twice.
 
 {% hint style="info" %}
-This API requires Megaphone 1.3.0. The [1.2.0 email digest API](email-digests.md) remains supported with its existing subscription and rendering behavior.
+This API requires Megaphone 1.3.0. The [1.2.0 email digest API](email-digests.md) is deprecated but remains supported with its existing subscription and rendering behavior.
 {% endhint %}
 
 ### Configuring a digest
 
 Register a collection channel for each named digest:
 
-```cfml
+```js
 moduleSettings.megaphone.channels.dailyAuditions = {
     "provider": "DigestProvider@megaphone",
     "properties": { "digestName": "dailyAuditions" }
@@ -49,7 +49,7 @@ Configure `queue.notifiableResolver` to load the current Notifiable from its sav
 
 Megaphone stores the subscriptions. Your application can read them to display the user's daily or weekly choice without storing another frequency field:
 
-```cfml
+```js
 var digests = wirebox.getInstance( "DigestService@megaphone" );
 
 digests.addSubscription(
@@ -65,7 +65,7 @@ A missing or stopped subscription does not collect items. Returning a collection
 
 `AuditionPublishedNotification` can read the subscriptions to choose its collection channels:
 
-```cfml
+```js
 component extends="megaphone.models.BaseNotification" accessors="true" {
 
     property name="digests" inject="DigestService@megaphone";
@@ -105,7 +105,7 @@ Send the Notification using `notify()`, `queue()`, or `queuePlan()`. `plan()` ca
 
 At the cutoff, Megaphone populates the configured summary Notification with `batchId`, `digestName`, `cutoffAt`, and the selected `items`. For example, `DailyAuditionsNotification` can choose its delivery channels from the Notifiable's preferences:
 
-```cfml
+```js
 component extends="megaphone.models.BaseNotification" accessors="true" {
 
     property name="batchId";
@@ -148,7 +148,7 @@ By default, a digest includes every eligible item, newest first, with item-key o
 
 Your policy supplies `canCollect()`, `canSend()`, and `isEligible()`. For example, `AuditionDigestPolicy` can check consent and whether an audition is still visible:
 
-```cfml
+```js
 component implements="megaphone.models.Interfaces.IDigestPolicy" {
 
     property name="auditions" inject="AuditionService";
@@ -177,7 +177,7 @@ Consent, recipient identity, subscription generation, and item eligibility are c
 
 Use the lifecycle methods to change a user's choice:
 
-```cfml
+```js
 // Change timing while keeping eligible pending items.
 digests.updateSubscription(
     notifiable = user,
@@ -201,7 +201,7 @@ Schedule changes keep eligible pending items and invalidate obsolete unstarted b
 
 Adding a weekly subscription does not stop the daily subscription. Use a transfer when your application offers them as mutually exclusive choices:
 
-```cfml
+```js
 var result = digests.transferSubscription(
     notifiable = user,
     fromDigest = "dailyAuditions",
@@ -221,7 +221,7 @@ The source stops and the destination activates in one transaction. An existing d
 
 For `transfer`, the destination policy must explicitly approve the item format:
 
-```cfml
+```js
 public boolean function canTransfer(
     required any notifiable,
     required struct sourceDefinition,
@@ -246,7 +246,7 @@ The result contains `source`, `destination`, `transferred`, `deduplicated`, `sup
 
 For individual audition notifications, return ordinary delivery channels from `AuditionPublishedNotification.via()` and implement their formatters on that Notification. To offer this alongside the digest choices, start that method's channel array from an application preference method instead of an empty array:
 
-```cfml
+```js
 var channels = arguments.notifiable.getImmediateAuditionChannels();
 ```
 
@@ -254,7 +254,7 @@ var channels = arguments.notifiable.getImmediateAuditionChannels();
 
 When the user switches to individual alerts instead of a digest, stop their old subscriptions explicitly:
 
-```cfml
+```js
 for ( var name in [ "dailyAuditions", "weeklyAuditions" ] ) {
     digests.stopSubscription( notifiable = user, digestName = name );
 }
@@ -262,7 +262,7 @@ for ( var name in [ "dailyAuditions", "weeklyAuditions" ] ) {
 
 An immediate digest is another choice. Configure an `auditionUpdates` definition with a policy and `notification: "AuditionUpdatesNotification"`, then register a `DigestProvider` channel whose `properties.digestName` is `auditionUpdates`:
 
-```cfml
+```js
 digests.addSubscription(
     notifiable = user,
     digestName = "auditionUpdates",

@@ -2,13 +2,13 @@
 
 `DigestProvider` collects items for a named digest. The digest's schedule determines when Megaphone creates a summary Notification. That Notification chooses the delivery channels and provides their content.
 
-This Provider requires Megaphone 1.3.0. See [Digests](../guides/digests.md) for a complete daily/weekly audition example.
+This Provider replaces the deprecated [EmailDigestProvider](emaildigestprovider.md) in Megaphone 1.3.0. It uses `toDigest()` and a summary Notification instead of `toEmailDigest()` and an email renderer. Existing email digests remain supported; see the [Upgrade Guide](../upgrade-guide.md#upgrading-to-1.3.0) to migrate. See [Digests](../guides/digests.md) for a complete daily/weekly audition example.
 
 ### Configuration
 
 Each collection channel requires `properties.digestName`:
 
-```cfml
+```js
 "dailyAuditions": {
     "provider": "DigestProvider@megaphone",
     "properties": { "digestName": "dailyAuditions" }
@@ -17,7 +17,7 @@ Each collection channel requires `properties.digestName`:
 
 Configure the named definition under `moduleSettings.megaphone.digests`:
 
-```cfml
+```js
 "dailyAuditions": {
     "schedule": "everyDayAt 09:00",
     "policy": "AuditionDigestPolicy",
@@ -31,7 +31,7 @@ The definition supplies a policy and summary Notification mapping. It does not s
 
 Return an item from the source Notification's `toDigest()` method:
 
-```cfml
+```js
 public struct function toDigest( required any notifiable ) {
     return {
         "itemKey": variables.digests.itemKey( [ "audition.published", variables.publicationEventId, 1 ] ),

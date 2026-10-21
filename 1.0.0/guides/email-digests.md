@@ -1,6 +1,8 @@
 # Named Email Digests
 
-For the provider-independent API added in 1.3.0, see [Digests](digests.md). This page documents the compatible 1.2.0 email channel and renderer API.
+{% hint style="warning" %}
+The email-specific digest API is deprecated in Megaphone 1.3.0. Use [DigestProvider](../providers/digestprovider.md) and [Digests](../guides/digests.md) instead. The new API collects items independently of delivery and publishes a summary Notification that can choose email, SMS, or other channels. The legacy API ties each digest to an email channel and renderer. Existing email digests remain supported for compatibility.
+{% endhint %}
 
 A named digest lets a Notifiable receive a scheduled summary or an immediate one-item email. Notifications use [EmailDigestProvider](../providers/emaildigestprovider.md) in either case. The same policy, renderer, and receipt-aware email channel handle both timings.
 
@@ -12,7 +14,7 @@ Apply `2026_10_14_120000_create_megaphone_email_digests` through your applicatio
 
 Configure the collection channel, named definition, and storage:
 
-```cfml
+```js
 moduleSettings.megaphone = {
     "channels": {
         "email": {
@@ -47,7 +49,7 @@ The named definition provides scheduling and content behavior. The default selec
 
 Subscriptions start off. Store the user's choice using `EmailDigestService@megaphone`:
 
-```cfml
+```js
 var digests = wirebox.getInstance( "EmailDigestService@megaphone" );
 
 digests.setSubscription(
@@ -62,7 +64,7 @@ Use `off`, `immediate`, or `digest`. `timezone` uses the same Java timezone iden
 
 The Notification needs only one route. Megaphone reads the named subscription to choose scheduled collection, an immediate one-item batch, or suppression:
 
-```cfml
+```js
 component extends="megaphone.models.BaseNotification" accessors="true" {
     property name="digests" inject="EmailDigestService@megaphone";
     property name="productId";
@@ -129,7 +131,7 @@ Supporting both products does not mean routing one update to both `email` and `e
 
 An application that wants the digest renderer for every individual item does not need to support scheduled Digest as another user choice. Omit the calendar schedule, use an immediate subscription, and keep `via()` returning only `[ "emailDigest" ]`:
 
-```cfml
+```js
 moduleSettings.megaphone.digests.productUpdates = {
     "emailChannel": "email",
     "policy": "ImmediateProductDigestPolicy",
@@ -147,7 +149,7 @@ For this product, the preference UI can simply expose On/Off: On stores `immedia
 
 `ImmediateProductDigestPolicy` can explicitly allow only immediate subscriptions:
 
-```cfml
+```js
 component {
     property name="consent" inject="ConsentService";
     property name="catalog" inject="ProductService";
@@ -189,7 +191,7 @@ Megaphone provides `config/Scheduler.cfc`, registered by ColdBox as `cbScheduler
 
 Use the exact ColdBox frequency names:
 
-```cfml
+```js
 "schedule": "everyDayAt 09:00"
 "schedule": "everyWeekOn 1 09:00"
 "schedule": "everyMonth"
@@ -200,7 +202,7 @@ Use the exact ColdBox frequency names:
 
 For advanced schedules, configure the named definition with a closure receiving the real ColdBox task:
 
-```cfml
+```js
 "schedule": ( task ) => task
     .onWeekdays( "09:00" )
     .withNoOverlaps()
@@ -215,7 +217,7 @@ Executable closures and task instances stay in the named definition. Subscriptio
 
 Add a new product digest after startup:
 
-```cfml
+```js
 digests.registerDigest( "weeklyAnnouncements", {
     "schedule": ( task ) => task.everyWeekOn( 5, "16:00" ),
     "timezone": "America/Denver",
@@ -231,7 +233,7 @@ A definition with a schedule registers and starts its task on the existing modul
 
 Use the helpers on `EmailDigestService`:
 
-```cfml
+```js
 var item = {
     "digestName": "productUpdates",
     "itemKey": digests.itemKey( [ "product.updated", savedEvent.getId(), 1 ] ),
@@ -258,7 +260,7 @@ Each method returns a boolean and performs local reads. Check authoritative pref
 
 For example, an application's `ProductDigestPolicy` can check its consent records and current catalog visibility:
 
-```cfml
+```js
 component {
     property name="consent" inject="ConsentService";
     property name="catalog" inject="ProductService";
@@ -287,7 +289,7 @@ Off, disabled, or denied items become suppression records. Their identities are 
 
 The definition's `renderer` implements `IEmailDigestRenderer`, or its `render(notifiable, definition, batch, items)` method. Return a `BaseNotification` that implements `toEmail()`:
 
-```cfml
+```js
 component {
     property name="products" inject="ProductService";
     property name="unsubscribeLinks" inject="DigestUnsubscribeLinks";
@@ -318,7 +320,7 @@ Consent, subscription generation, and item eligibility are checked again after r
 
 Selection happens once while freezing a scheduled cutoff or a new immediate item, after current consent and item eligibility checks. The default keeps all eligible candidates in descending `occurredAt` order, then item-key order. Configure `selectItems` as a closure or a WireBox component with `selectItems(notifiable, definition, items)`:
 
-```cfml
+```js
 "selectItems": ( notifiable, definition, items ) => items.isEmpty() ? [] : items.slice( 1, min( 10, items.len() ) )
 ```
 
@@ -346,7 +348,7 @@ Confirmed retryable failures use the same batch and delivery identity. Unknown o
 
 After validating an application-signed link bound to the recipient and digest name, call:
 
-```cfml
+```js
 digests.unsubscribe( notifiable = user, digestName = "productUpdates" );
 ```
 
