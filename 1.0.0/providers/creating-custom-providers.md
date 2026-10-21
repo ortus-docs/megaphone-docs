@@ -126,3 +126,15 @@ var route = routeNotificationFor(
     optional = true
 );
 ```
+
+### Collection Providers
+
+`INotificationCollectionProvider` describes the optional collection protocol used by [DigestProvider](digestprovider.md). It remains part of the provider-independent API; only the legacy [EmailDigestProvider](emaildigestprovider.md) is deprecated.
+
+A collection Provider admits content for later processing instead of starting delivery. Implement these methods when your custom Provider needs that behavior:
+
+- `supportsCollection()` returns `true` so planning recognizes a collection channel.
+- `getCollectionIntent(notifiable, notification)` captures and validates the item without writing or sending it.
+- `collectPlanned(event, intent)` admits the captured item transactionally when the plan is published.
+
+For `DigestProvider`, scheduled collection waits for a cutoff and immediate collection creates a one-item summary. The summary is an ordinary Notification with its own delivery channels. Collection returns an admission result; it does not establish transport acceptance. A custom Provider that sends directly can use the ordinary delivery contract without implementing collection.

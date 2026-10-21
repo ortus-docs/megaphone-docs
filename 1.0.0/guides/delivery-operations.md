@@ -43,9 +43,29 @@ The `acceptance` callback receives the current delivery. Your application valida
 
 Keep Provider calls outside this callback: it runs inside the reconciliation transaction.
 
+### Reconciling a confirmed rejection
+
+An ambiguous outcome stays quarantined until your application has authoritative evidence. If the Provider confirms that no attempt for the delivery identity was accepted, use `reconcileNotAccepted(id, rejection, retryDate=now(), clock=now())`:
+
+```cfml
+var updated = deliveries.reconcileNotAccepted(
+    id = deliveryId,
+    rejection = function( work ) {
+        return {
+            "accepted": false,
+            "providerReference": verifiedRejectionReference
+        };
+    }
+);
+```
+
+The callback receives a `NotificationDelivery` and validates a receipt already stored locally. It runs within the reconciliation transaction, so fetch Provider evidence beforehand. Merely failing to find a message is not proof of nonacceptance.
+
+The method returns a boolean and only changes an ambiguous delivery. A valid nonacceptance receipt makes that delivery retryable without resetting transport counts or replacing its batch identity. Current consent and eligibility are checked on its next dispatch. Missing evidence or an invalid receipt throws `Megaphone.Delivery.InvalidReceipt`.
+
 ### Scheduled maintenance
 
-`recoverExpired()` handles expired worker leases. For retention, use `pruneAttempts(beforeDate, limit)` and `pruneResolvedEvents(eventsBefore, deliveriesBefore, limit)` to work in bounded batches.
+`recoverExpired(limit=100, clock=now(), constraints)` handles expired worker leases. Pass trusted query constraints to scope maintenance to selected channels; Named Email Digests uses this to recover only its own mail. For retention, use `pruneAttempts(beforeDate, limit)` and `pruneResolvedEvents(eventsBefore, deliveriesBefore, limit)` to work in bounded batches.
 
 If your application needs to save retirement evidence before an event is removed, pass a `beforePrune(event, deliveries)` callback. It receives objects after owner locks and terminal-state checks, within the pruning transaction. Save the local evidence there and keep external I/O outside the callback.
 
