@@ -128,8 +128,9 @@ var exclusions = pushSubscriptionService.getExcludedIdsForTypes(
     notificationTypes = notificationTypes
 );
 
-// exclusions[ 1 ] contains device IDs excluded for OrderReadyNotification.
-// exclusions[ 2 ] contains device IDs excluded for InvoicePaidNotification.
+// Access each result by notification type.
+var orderDevices = exclusions[ "OrderReadyNotification" ];
+var invoiceDevices = exclusions[ "InvoicePaidNotification" ];
 ```
 
 Load `user` from the authenticated session, as in the registration example. Your application still authorizes which notification types the user can view or change.
@@ -137,13 +138,13 @@ Load `user` from the authenticated session, as in the registration example. Your
 | Name | Type | Required | Description |
 | --- | --- | --- | --- |
 | `notifiable` | `INotifiable` | true | The owner of the exclusions. Reads are constrained by both recipient type and ID. |
-| `notificationTypes` | `array` | true | Notification-type strings in the order you want the results. |
+| `notificationTypes` | `array` | true | Notification-type strings to look up. |
 
-**Return:** An array of device-ID arrays, with one entry for each input type. Each entry matches `getExcludedIds(notifiable, notificationType)`. Types without exclusions return an empty array. Repeated types return separate arrays, so changing one result does not change another.
+**Return:** A case-sensitive struct keyed by notification type. Each value is an array of device IDs matching `getExcludedIds(notifiable, notificationType)`. Requested types without exclusions map to an empty array. Repeated input types produce one key and are read once. Type names that differ only by case retain separate keys; the values still follow the database's comparison rules.
 
-The stock store uses Megaphone's existing bounded identity reader, with at most 100 requested types per query. Forty types require one query; 101 require two. Comparisons follow the database's equality rules, including its collation. The batch uses the same configured subscription storage options as the scalar lookup.
+The stock store uses Megaphone's existing bounded identity reader, with at most 100 distinct types per query. Forty distinct types require one query; 101 require two. Comparisons follow the database's equality rules, including its collation. The batch uses the same configured subscription storage options as the scalar lookup.
 
-Pass nonblank notification-type strings no longer than 160 characters. Invalid entries raise `Megaphone.Push.InvalidExclusion` before any queries run. An empty `notificationTypes` array returns an empty array without querying, for a valid Notifiable.
+Pass nonblank notification-type strings no longer than 160 characters. Invalid entries raise `Megaphone.Push.InvalidExclusion` before any queries run. An empty `notificationTypes` array returns an empty struct without querying, for a valid Notifiable.
 
 Each call reads current exclusions. The method does not cache preferences or device state, and reading exclusions does not change a device or its delivery preferences.
 
