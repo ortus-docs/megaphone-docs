@@ -109,14 +109,14 @@ You can use the same service for your device settings:
 | `disconnect(notifiable, id)` | Retire a registration. |
 | `setExcluded(notifiable, notificationType, deviceId, excluded)` | Turn a notification type off or on for one device. |
 | `getExcludedIds(notifiable, notificationType)` | Read the device exclusions for that notification type. |
-| `getExcludedIdsForTypes(notifiable, notificationTypes)` | Read exclusions for several notification types in one batch. Available in the upcoming release. |
+| `getExcludedIdsForTypes(notifiable, notificationTypes)` | Read exclusions for several notification types in one batch. Available since 1.4.0. |
 
 Registering a device doesn't change channel preferences or publish a notification. Your application handles browser enrollment and service-worker behavior. It should also disconnect the registration on logout or account switch.
 
 ### Reading exclusions for several notification types
 
 {% hint style="info" %}
-`getExcludedIdsForTypes()` is available in the upcoming release after 1.3.0. See [the module change](https://github.com/coldbox-modules/megaphone/pull/6).
+`getExcludedIdsForTypes()` is available since [Megaphone 1.4.0](https://github.com/coldbox-modules/megaphone/releases/tag/v1.4.0).
 {% endhint %}
 
 A notification settings page may need the device exclusions for every type it displays. Read them together instead of calling `getExcludedIds()` inside a loop:

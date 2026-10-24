@@ -1,6 +1,6 @@
 # What's New?
 
-### Unreleased
+### 1.4.0
 
 [Push registrations](guides/push-registrations.md#reading-exclusions-for-several-notification-types) adds `getExcludedIdsForTypes()` for notification settings pages. Read several types' device exclusions together and access the results by notification type. Recipient ownership and database comparisons match the scalar lookup. The existing bounded reader handles up to 100 distinct types per query; no schema migration is needed.
 
