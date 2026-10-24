@@ -109,8 +109,43 @@ You can use the same service for your device settings:
 | `disconnect(notifiable, id)` | Retire a registration. |
 | `setExcluded(notifiable, notificationType, deviceId, excluded)` | Turn a notification type off or on for one device. |
 | `getExcludedIds(notifiable, notificationType)` | Read the device exclusions for that notification type. |
+| `getExcludedIdsMany(notifiable, notificationTypes)` | Read exclusions for several notification types in one batch. Available in the upcoming release. |
 
 Registering a device doesn't change channel preferences or publish a notification. Your application handles browser enrollment and service-worker behavior. It should also disconnect the registration on logout or account switch.
+
+### Reading exclusions for several notification types
+
+{% hint style="info" %}
+`getExcludedIdsMany()` is available in the upcoming release after 1.3.0. See [the module change](https://github.com/coldbox-modules/megaphone/pull/6).
+{% endhint %}
+
+A notification settings page may need the device exclusions for every type it displays. Read them together instead of calling `getExcludedIds()` inside a loop:
+
+```js
+var notificationTypes = [ "OrderReadyNotification", "InvoicePaidNotification" ];
+var exclusions = pushSubscriptionService.getExcludedIdsMany(
+    notifiable = user,
+    notificationTypes = notificationTypes
+);
+
+// exclusions[ 1 ] contains device IDs excluded for OrderReadyNotification.
+// exclusions[ 2 ] contains device IDs excluded for InvoicePaidNotification.
+```
+
+Load `user` from the authenticated session, as in the registration example. Your application still authorizes which notification types the user can view or change.
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| `notifiable` | `INotifiable` | true | The owner of the exclusions. Reads are constrained by both recipient type and ID. |
+| `notificationTypes` | `array` | true | Notification-type strings in the order you want the results. |
+
+**Return:** An array of device-ID arrays, with one entry for each input type. Each entry matches `getExcludedIds(notifiable, notificationType)`. Types without exclusions return an empty array. Repeated types return separate arrays, so changing one result does not change another.
+
+The stock store uses Megaphone's existing bounded identity reader, with at most 100 requested types per query. Forty types require one query; 101 require two. Comparisons follow the database's equality rules, including its collation. The batch uses the same configured subscription storage options as the scalar lookup.
+
+Pass nonblank notification-type strings no longer than 160 characters. Invalid entries raise `Megaphone.Push.InvalidExclusion` before any queries run. An empty `notificationTypes` array returns an empty array without querying, for a valid Notifiable.
+
+Each call reads current exclusions. The method does not cache preferences or device state, and reading exclusions does not change a device or its delivery preferences.
 
 ### Configuring subscription storage
 

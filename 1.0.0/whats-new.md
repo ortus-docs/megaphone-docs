@@ -1,5 +1,9 @@
 # What's New?
 
+### Unreleased
+
+[Push registrations](guides/push-registrations.md#reading-exclusions-for-several-notification-types) adds `getExcludedIdsMany()` for notification settings pages. Read several types' device exclusions together while preserving input order, recipient ownership, and the same database comparisons as the scalar lookup. The existing bounded reader handles up to 100 requests per query; no schema migration is needed.
+
 ### 1.3.0
 
 Digests can now send through any of your existing delivery channels. [DigestProvider](providers/digestprovider.md) collects items for a named schedule, then publishes another Notification. That Notification's `via()` chooses email, SMS, or other channels, and its Provider methods supply the content. One daily summary can send through multiple channels without collecting its items twice.
